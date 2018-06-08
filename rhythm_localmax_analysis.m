@@ -1,6 +1,6 @@
-function rhythm_localmax_analysis(resultPath, datatypeid, subject_list, subjind, rhythmid, rhythm_band_inds, tVec, fVec, prestim_inds, TFR_yes_no, YorN)
+function rhythm_localmax_analysis(resultPath, datatypeid, subject_list, subjind, rhythmid, rhythm_band_inds, prestim_tVec, fVec, prestim_inds, TFR_yes_no, YorN)
 
-% TFRlocalmax: first, retrieve all local maxima in TFR using imregionalmax
+%%%%%%% TFRlocalmax: first, retrieve all local maxima in TFR using imregionalmax
 % prestimrhythmlocalmax: then, pick out maxima for the frequency band of interest in the prestimulus period
 
 prestimduration=1000; %ms
@@ -41,21 +41,21 @@ for ti=1:numtrials
     
     lmT_underthr=find(squeeze(TFR_yes_no(peakF(lmi),:,ti)<peakpower(lmi)/2));
     if ~isempty(find(lmT_underthr < peakT(lmi), 1)) && ~isempty(find(lmT_underthr > peakT(lmi), 1))
-      Tfwhm(lmi,1)=tVec(lmT_underthr(find(lmT_underthr < peakT(lmi),1,'last'))+1);
-      Tfwhm(lmi,2)=tVec(lmT_underthr(find(lmT_underthr > peakT(lmi),1,'first'))-1);
-      Tfwhm(lmi,3)=Tfwhm(lmi,2)-Tfwhm(lmi,1)+ min(diff(tVec));
+      Tfwhm(lmi,1)=prestim_tVec(lmT_underthr(find(lmT_underthr < peakT(lmi),1,'last'))+1);
+      Tfwhm(lmi,2)=prestim_tVec(lmT_underthr(find(lmT_underthr > peakT(lmi),1,'first'))-1);
+      Tfwhm(lmi,3)=Tfwhm(lmi,2)-Tfwhm(lmi,1)+ min(diff(prestim_tVec));
     elseif isempty(find(lmT_underthr < peakT(lmi),1)) && ~isempty(find(lmT_underthr > peakT(lmi),1))
-      Tfwhm(lmi,1)=tVec(1);
-      Tfwhm(lmi,2)=tVec(lmT_underthr(find(lmT_underthr > peakT(lmi),1,'first'))-1);
-      Tfwhm(lmi,3)=2*(Tfwhm(lmi,2)-tVec(peakT(lmi)))+ min(diff(tVec));
+      Tfwhm(lmi,1)=prestim_tVec(1);
+      Tfwhm(lmi,2)=prestim_tVec(lmT_underthr(find(lmT_underthr > peakT(lmi),1,'first'))-1);
+      Tfwhm(lmi,3)=2*(Tfwhm(lmi,2)-prestim_tVec(peakT(lmi)))+ min(diff(prestim_tVec));
     elseif ~isempty(find(lmT_underthr < peakT(lmi),1)) && isempty(find(lmT_underthr > peakT(lmi),1))
-      Tfwhm(lmi,1)=tVec(lmT_underthr(find(lmT_underthr < peakT(lmi),1,'last'))+1);
-      Tfwhm(lmi,2)=tVec(end);
-      Tfwhm(lmi,3)=2*(tVec(peakT(lmi))-Tfwhm(lmi,1))+ min(diff(tVec));
+      Tfwhm(lmi,1)=prestim_tVec(lmT_underthr(find(lmT_underthr < peakT(lmi),1,'last'))+1);
+      Tfwhm(lmi,2)=prestim_tVec(end);
+      Tfwhm(lmi,3)=2*(prestim_tVec(peakT(lmi))-Tfwhm(lmi,1))+ min(diff(prestim_tVec));
     else
-      Tfwhm(lmi,1)=tVec(1);
-      Tfwhm(lmi,2)=tVec(end);
-      Tfwhm(lmi,3)=2*(tVec(end)-tVec(1)+min(diff(tVec)));
+      Tfwhm(lmi,1)=prestim_tVec(1);
+      Tfwhm(lmi,2)=prestim_tVec(end);
+      Tfwhm(lmi,3)=2*(prestim_tVec(end)-prestim_tVec(1)+min(diff(prestim_tVec)));
     end
   end
   
@@ -63,7 +63,7 @@ for ti=1:numtrials
   % % % 7. maxima timing, 8. event onset timing, 9. event offset timing, 10. event duration, 11. maxima power, 12. maxima/median power, ...
   % % {'trial index', 'yes/no', 'maxima frequency', 'lowerbound F-span', 'upperbound F-span', 'F-span', ...
   % %     'maxima timing', 'onset timing', 'offset timing', 'duration', 'maxima power', 'maxima/median power'};
-  TFRlocalmax=[TFRlocalmax; ti*ones(size(peakF)) YorN(ti)*ones(size(peakF)) fVec(peakF)' Ffwhm tVec(peakT)' Tfwhm peakpower];
+  TFRlocalmax=[TFRlocalmax; ti*ones(size(peakF)) YorN(ti)*ones(size(peakF)) fVec(peakF)' Ffwhm prestim_tVec(peakT)' Tfwhm peakpower];
   Finds_localmax=[Finds_localmax; peakF];
 end
 
