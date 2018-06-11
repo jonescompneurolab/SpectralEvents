@@ -1,5 +1,5 @@
 resultPath=uigetdir('', 'folder to load data from, and save data to'); % user can input where 
-thrFOM=6;
+thrFOM=6; %Threshold Factors of Median
 rhythm_band_inds = 15:29; % indices of fVec that corresponds to 15 to 29 Hz band.
 rhythmid='beta';
 
@@ -14,10 +14,9 @@ for s=1:10
   
   load(strcat(resultPath, '/prestim_', datatypeid, '_', subject_list{s}, '.mat'))
     
-  indsoi = 1:length(tVec); % Indices correspond to t = -1000:0 ms.
   %rhythm_localmax_analysis(resultPath, datatypeid, subject_list, s, rhythmid, rhythm_band_inds, tVec, fVec, indsoi, prestim_TFR_yes_no, YorN)
   %rhythm_event_analysis(rhythmid, datatypeid, resultPath, subject_list, s, thrFOM, tVec, fVec, prestim_TFR_yes_no, YorN)
-  rhythm_event_analysis(resultPath, datatypeid, subject_list, s, rhythmid, rhythm_band_inds, thrFOM, tVec, fVec, indsoi, prestim_TFR_yes_no, YorN)
+  rhythm_event_analysis(resultPath, datatypeid, subject_list, s, rhythmid, rhythm_band_inds, thrFOM, tVec, fVec, prestim_TFR_yes_no, YorN)
 end
 
 %% human detection data
@@ -29,24 +28,22 @@ for s=1:10
   
   load(strcat(resultPath, '/prestim_', datatypeid, '_', subject_list{s}, '.mat'))  
     
-  indsoi = 1:length(tVec); % Indices correspond to t = -1000:0 ms.
   %rhythm_localmax_analysis(resultPath, datatypeid, subject_list, s, rhythmid, rhythm_band_inds, tVec, fVec, indsoi, prestim_TFR_yes_no, YorN)  
   %rhythm_event_analysis(rhythmid, datatypeid, resultPath, subject_list, s, thrFOM, tVec, fVec, prestim_TFR_yes_no, YorN)
-  rhythm_event_analysis(resultPath, datatypeid, subject_list, s, rhythmid, rhythm_band_inds, thrFOM, tVec, fVec, indsoi, prestim_TFR_yes_no, YorN)
+  rhythm_event_analysis(resultPath, datatypeid, subject_list, s, rhythmid, rhythm_band_inds, thrFOM, tVec, fVec, prestim_TFR_yes_no, YorN)
 
 end
 
 %% human attention data: detect trials only
-% datatypeid='humanattention';
-% subject_list = {'subject1', 'subject2', 'subject3', 'subject4', 'subject5', 'subject6', 'subject7', 'subject8', 'subject9', 'subject10'}; % List of Subject ID Numbers
-% 
-% for s=1:10
-%   clearvars -except resultPath datatypeid subject_list s thrFOM rhythm_band_inds rhythmid  
-%   
-%   load(strcat(resultPath, '/prestim_', datatypeid, '_', subject_list{s}, '.mat'))
-%      
-%   indsoi = 1:length(tVec); % Indices correspond to t = -1000:0 ms.
-%   %rhythm_localmax_analysis(resultPath, datatypeid, subject_list, s, rhythmid, rhythm_band_inds, tVec, fVec, indsoi, prestim_TFR_yes_no, YorN)
-%   %rhythm_event_analysis(rhythmid, datatypeid, resultPath, subject_list, s, thrFOM, tVec, fVec, prestim_TFR_yes_no, YorN)
-%   rhythm_event_analysis(resultPath, datatypeid, subject_list, s, rhythmid, rhythm_band_inds, thrFOM, tVec, fVec, indsoi, prestim_TFR_yes_no, YorN)
-% end
+datatypeid='humanattention';
+subject_list = {'subject1', 'subject2', 'subject3', 'subject4', 'subject5', 'subject6', 'subject7', 'subject8', 'subject9', 'subject10'}; % List of Subject ID Numbers
+
+for s=1:10
+  clearvars -except resultPath datatypeid subject_list s thrFOM rhythm_band_inds rhythmid  
+  
+  load(strcat(resultPath, '/prestim_', datatypeid, '_', subject_list{s}, '.mat'))
+     
+  %rhythm_localmax_analysis(resultPath, datatypeid, subject_list, s, rhythmid, rhythm_band_inds, tVec, fVec, indsoi, prestim_TFR_yes_no, YorN)
+  %rhythm_event_analysis(rhythmid, datatypeid, resultPath, subject_list, s, thrFOM, tVec, fVec, prestim_TFR_yes_no, YorN)
+  rhythm_event_analysis(resultPath, datatypeid, subject_list, s, rhythmid, rhythm_band_inds, thrFOM, tVec, fVec, prestim_TFR_yes_no, YorN)
+end

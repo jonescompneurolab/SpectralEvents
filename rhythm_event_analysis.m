@@ -1,13 +1,14 @@
-function rhythm_event_analysis(resultPath, datatypeid, subject_list, subjind, rhythmid, rhythm_band_inds, thrFOM, prestim_tVec, fVec, prestim_inds, prestim_TFR_yes_no, YorN)
+function rhythm_event_analysis(resultPath, datatypeid, subject_list, subjind, rhythmid, rhythm_band_inds, thrFOM, tVec, fVec, prestim_TFR_yes_no, YorN)
 
 %%%%%%%%%%%%
 %%%%%%% TFRlocalmax: first, retrieve all local maxima in TFR using imregionalmax
 % prestimrhythmlocalmax: then, pick out maxima for the frequency band of interest in the prestimulus period
 
-prestimduration=1000; %ms
-flength=size(prestim_TFR_yes_no,1);
-tlength=size(prestim_TFR_yes_no,2);
-numtrials=size(prestim_TFR_yes_no,3);
+trial_duration = tVec(end)-tVec(1); %Duration of time trial
+flength=size(prestim_TFR_yes_no,1); %Number of elements in discrete frequency spectrum
+tlength=size(prestim_TFR_yes_no,2); %Number of points in time
+numtrials=size(prestim_TFR_yes_no,3); %Number of trials
+time_inds = (1:length(tVec)); %Indices of timepoints corresponding to time vector
 
 TFRlocalmax=[];
 Finds_localmax=[];
@@ -42,21 +43,21 @@ for ti=1:numtrials
     
     lmT_underthr=find(squeeze(prestim_TFR_yes_no(peakF(lmi),:,ti)<peakpower(lmi)/2));
     if ~isempty(find(lmT_underthr < peakT(lmi), 1)) && ~isempty(find(lmT_underthr > peakT(lmi), 1))
-      Tfwhm(lmi,1)=prestim_tVec(lmT_underthr(find(lmT_underthr < peakT(lmi),1,'last'))+1);
-      Tfwhm(lmi,2)=prestim_tVec(lmT_underthr(find(lmT_underthr > peakT(lmi),1,'first'))-1);
-      Tfwhm(lmi,3)=Tfwhm(lmi,2)-Tfwhm(lmi,1)+ min(diff(prestim_tVec));
+      Tfwhm(lmi,1)=tVec(lmT_underthr(find(lmT_underthr < peakT(lmi),1,'last'))+1);
+      Tfwhm(lmi,2)=tVec(lmT_underthr(find(lmT_underthr > peakT(lmi),1,'first'))-1);
+      Tfwhm(lmi,3)=Tfwhm(lmi,2)-Tfwhm(lmi,1)+ min(diff(tVec));
     elseif isempty(find(lmT_underthr < peakT(lmi),1)) && ~isempty(find(lmT_underthr > peakT(lmi),1))
-      Tfwhm(lmi,1)=prestim_tVec(1);
-      Tfwhm(lmi,2)=prestim_tVec(lmT_underthr(find(lmT_underthr > peakT(lmi),1,'first'))-1);
-      Tfwhm(lmi,3)=2*(Tfwhm(lmi,2)-prestim_tVec(peakT(lmi)))+ min(diff(prestim_tVec));
+      Tfwhm(lmi,1)=tVec(1);
+      Tfwhm(lmi,2)=tVec(lmT_underthr(find(lmT_underthr > peakT(lmi),1,'first'))-1);
+      Tfwhm(lmi,3)=2*(Tfwhm(lmi,2)-tVec(peakT(lmi)))+ min(diff(tVec));
     elseif ~isempty(find(lmT_underthr < peakT(lmi),1)) && isempty(find(lmT_underthr > peakT(lmi),1))
-      Tfwhm(lmi,1)=prestim_tVec(lmT_underthr(find(lmT_underthr < peakT(lmi),1,'last'))+1);
-      Tfwhm(lmi,2)=prestim_tVec(end);
-      Tfwhm(lmi,3)=2*(prestim_tVec(peakT(lmi))-Tfwhm(lmi,1))+ min(diff(prestim_tVec));
+      Tfwhm(lmi,1)=tVec(lmT_underthr(find(lmT_underthr < peakT(lmi),1,'last'))+1);
+      Tfwhm(lmi,2)=tVec(end);
+      Tfwhm(lmi,3)=2*(tVec(peakT(lmi))-Tfwhm(lmi,1))+ min(diff(tVec));
     else
-      Tfwhm(lmi,1)=prestim_tVec(1);
-      Tfwhm(lmi,2)=prestim_tVec(end);
-      Tfwhm(lmi,3)=2*(prestim_tVec(end)-prestim_tVec(1)+min(diff(prestim_tVec)));
+      Tfwhm(lmi,1)=tVec(1);
+      Tfwhm(lmi,2)=tVec(end);
+      Tfwhm(lmi,3)=2*(tVec(end)-tVec(1)+min(diff(tVec)));
     end
   end
   
@@ -64,14 +65,14 @@ for ti=1:numtrials
   % % % 7. maxima timing, 8. event onset timing, 9. event offset timing, 10. event duration, 11. maxima power, 12. maxima/median power, ...
   % % {'trial index', 'yes/no', 'maxima frequency', 'lowerbound F-span', 'upperbound F-span', 'F-span', ...
   % %     'maxima timing', 'onset timing', 'offset timing', 'duration', 'maxima power', 'maxima/median power'};
-  TFRlocalmax=[TFRlocalmax; ti*ones(size(peakF)) YorN(ti)*ones(size(peakF)) fVec(peakF)' Ffwhm prestim_tVec(peakT)' Tfwhm peakpower];
+  TFRlocalmax=[TFRlocalmax; ti*ones(size(peakF)) YorN(ti)*ones(size(peakF)) fVec(peakF)' Ffwhm tVec(peakT)' Tfwhm peakpower];
   Finds_localmax=[Finds_localmax; peakF];
 end
 
 
-rhythmtfr=prestim_TFR_yes_no(:,prestim_inds,:);
+rhythmtfr=prestim_TFR_yes_no(:,time_inds,:);
 rhythmmedian=median(reshape(rhythmtfr, size(rhythmtfr,1), size(rhythmtfr,2)*size(rhythmtfr,3)), 2);
-rhythmlmi = find(TFRlocalmax(:,3)>=fVec(rhythm_band_inds(1)) & TFRlocalmax(:,3)<=fVec(rhythm_band_inds(end)) & TFRlocalmax(:,7)>=-prestimduration & TFRlocalmax(:,7)<0);
+rhythmlmi = find(TFRlocalmax(:,3)>=fVec(rhythm_band_inds(1)) & TFRlocalmax(:,3)<=fVec(rhythm_band_inds(end)) & TFRlocalmax(:,7)>=-trial_duration & TFRlocalmax(:,7)<0);
 prestimrhythmlocalmax = zeros(numel(rhythmlmi),size(TFRlocalmax,2)+1);
 prestimrhythmlocalmax(:,1:size(TFRlocalmax,2)) = TFRlocalmax(rhythmlmi,:);
 
@@ -80,15 +81,12 @@ prestimrhythmlocalmax(:,size(TFRlocalmax,2)+1)=prestimrhythmlocalmax(:,11)./rhyt
 TFRmedian=median(reshape(prestim_TFR_yes_no, size(prestim_TFR_yes_no,1), size(prestim_TFR_yes_no,2)*size(prestim_TFR_yes_no,3)), 2);
 TFRlocalmax=[TFRlocalmax TFRlocalmax(:,11)./rhythmmedian(TFRlocalmax(:,3))];
 
-save(strcat(resultPath, rhythmid, 'localmax_', datatypeid, '_', subject_list{subjind}, '.mat'), 'rhythm_band_inds', 'prestimduration', 'rhythmmedian', 'TFRlocalmax', 'prestimrhythmlocalmax', 'Finds_localmax', 'rhythmlmi');
+save(strcat(resultPath, rhythmid, 'localmax_', datatypeid, '_', subject_list{subjind}, '.mat'), 'rhythm_band_inds', 'trial_duration', 'rhythmmedian', 'TFRlocalmax', 'prestimrhythmlocalmax', 'Finds_localmax', 'rhythmlmi');
 %%%%%%%%%%%%
 
-thr=thrFOM*rhythmmedian;
-flength=size(prestim_TFR_yes_no,1);
-tlength=size(prestim_TFR_yes_no,2);
-numtrials=size(prestim_TFR_yes_no,3);
+thr=thrFOM*rhythmmedian; %Spectral event threshold
 
-if flength~=length(fVec) || tlength~=length(prestim_tVec) || numtrials~=length(YorN)
+if flength~=length(fVec) || tlength~=length(tVec) || numtrials~=length(YorN)
     error('mismatch in input parameter dimensions')
 end
 
@@ -135,7 +133,7 @@ for tri=1:numtrials
     trialSummary(tri,sumind.meaneventpower)=0; % traces2TFR always returns a positive value
     trialSummary(tri,sumind.meaneventduration)=0;
     trialSummary(tri,sumind.meaneventFspan)=0;
-    trialSummary(tri,sumind.mostrecenteventtiming)=-prestimduration-mean(diff(prestim_tVec));
+    trialSummary(tri,sumind.mostrecenteventtiming)=-trial_duration-mean(diff(tVec));
     trialSummary(tri,sumind.mostrecenteventpower)=0;
     trialSummary(tri,sumind.mostrecenteventduration)=0;
     trialSummary(tri,sumind.mostrecenteventFspan)=0;
