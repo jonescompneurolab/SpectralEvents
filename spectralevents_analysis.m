@@ -1,11 +1,20 @@
 function spectralevents_analysis(specEv_struct, timeseries, TFRs, tVec, fVec)
-% spectralevent_analysis conducts basic analysis on the spectral event
-%   features found in spectralevents_find.m. Generates spectrogram and
-%   probability histogram plots comparing each trial classification label
-%   (experimental condition or outcome state) across all subjects/sessions.
-%   Input must be a Matlab structure array (struct) formatted as returned by 
-%   the spectralevents.m function.
-%   timeseries - Cell array containing time-series trials by subject/session
+% spectralevent_analysis(specEv_struct,timeseries,TFRs,tVec,fVec) conducts 
+%   basic analysis on the spectral event features and generates spectrogram
+%   and probability histogram plots comparing trial classification labels 
+%   (experimental conditions or outcome states) across 
+%   subjects/sessions.
+%
+% Inputs:
+%   specEv_struct - spectralevents structure array.
+%   timeseries - cell array containing time-series trials by 
+%       subject/session.
+%   TFRs - cell array containing time-frequency responses by
+%       subject/session.
+%   tVec - time vector (s) over which the time-frequency responses are 
+%       shown.
+%   fVec - frequency vector (Hz) over which the time-frequency responses
+%       are shown.
 
 numSubj = length(specEv_struct); %Number of subjects/sessions
 
@@ -64,58 +73,62 @@ for subj_i=1:numSubj
     end
 end
 
-% % Event feature histograms
-% eventNumTotal = [];
-% for subj_i=1:numSubj
-%     eventNumTotal = [eventNumTotal; specEv_struct(subj_i).TrialSummary.TrialSummary(:,3)];
-% end
-% eventNumVec = (0:max(eventNumTotal));
-% 
-% figure
-% for subj_i=1:numSubj
-%     eventNum = specEv_struct(subj_i).TrialSummary.TrialSummary(:,3);
-%     classLabels = specEv_struct(subj_i).TrialSummary.ClassLabels;
-%     classes = unique(classLabels); %Array of unique class labels
-%     numTrials = specEv_struct(subj_i).TrialSummary.NumTrials;
-% 
-%     
-%     % Calculate probability based on event number for each type of class
-%     % label (rows = event number; columns = class label)
-%     for cls_i=1:numel(classes)
-%         for evNum_i=1:numel(eventNumVec)
-%             eventNum_counts(evNum_i,cls_i) = nnz(classLabels(eventNum==eventNumVec(evNum_i))==classes(cls_i)); %Counts of a given event number and given class
-%         end
-%     end
-%     eventNum_prob = eventNum_counts./repmat(sum(eventNum_counts,2),1,numel(classes)) %Normalize to the total counts of a given event number across classes
-%     eventNum_prob(isnan(eventNum_prob)) = 0 %Correct for NaN values resulting from dividing by 0
-%     predModel = double(eventNum_prob > 0.5) %Binary predictive model based on most-probable class label
-%     predLabel = nan(size(eventNum)); %Array for storing predicted class labels
-%     for trl_i=1:numTrials
-%         predLabel(trl_i) = squeeze(predModel(eventNum(trl_i)==eventNumVec,2)); %Predicted class labels
-%     end
-%     
-%     for evNum_i=1:numel(eventNumVec)
-%         stuff = classLabels(eventNum==eventNumVec(evNum_i))
-%         [~,y,~,AUC] = perfcurve(classLabels(eventNum==eventNumVec(evNum_i)),predLabel(eventNum==eventNumVec(evNum_i)),1);
-%         %prob(evNum_i) = sum(y); %Hit probability: AUC of ROC curve
-%     end
-%     % Calculate probability based on event power for each type of class
-%     % label
-%     
-%     
-%     %subplot(4,1,1)
-%     hold on
-%     plot(eventNumVec,AUC)
-%     hold off
-%     
-%     %subplot(4,1,2)
-%     
-%    
-%     %subplot(4,1,3)
-%     
-%     
-%     %subplot(4,1,4)
-%     
-%     
-% end
+% Event feature probability histograms
+eventNumTotal = [];
+for subj_i=1:numSubj
+    eventNumTotal = [eventNumTotal; specEv_struct(subj_i).TrialSummary.TrialSummary(:,3)];
+end
+eventNumVec = (0:max(eventNumTotal));
+
+figure
+for subj_i=1:numSubj
+    eventNum = specEv_struct(subj_i).TrialSummary.TrialSummary(:,3);
+    classLabels = specEv_struct(subj_i).TrialSummary.ClassLabels;
+    classes = unique(classLabels); %Array of unique class labels
+    numTrials = specEv_struct(subj_i).TrialSummary.NumTrials;
+
+    
+    % Calculate probability based on event number for each type of class
+    % label (rows = event number; columns = class label)
+    for cls_i=1:numel(classes)
+        for evNum_i=1:numel(eventNumVec)
+            eventNum_counts(evNum_i,cls_i) = nnz(classLabels(eventNum==eventNumVec(evNum_i))==classes(cls_i)); %Counts of a given event number and given class
+        end
+    end
+    
+    if numel(find(eventNum_counts==0))>0
+        continue
+    end
+    
+    eventNum_prob = eventNum_counts./repmat(sum(eventNum_counts,2),1,numel(classes)); %Normalize to the total counts of a given event number across classes
+    eventNum_prob(isnan(eventNum_prob)) = 0; %Correct for NaN values resulting from dividing by 0
+    predModel = double(eventNum_prob > 0.5); %Binary predictive model based on most-probable class label
+    predLabel = nan(size(eventNum)); %Array for storing predicted class labels
+    for trl_i=1:numTrials
+        predLabel(trl_i) = squeeze(predModel(eventNum(trl_i)==eventNumVec,2)); %Predicted class labels
+    end
+    
+    for evNum_i=1:numel(eventNumVec)
+        [~,~,~,AUC] = perfcurve(classLabels(eventNum==eventNumVec(evNum_i)),predLabel(eventNum==eventNumVec(evNum_i)),1);
+        %prob(evNum_i) = sum(y); %Hit probability: AUC of ROC curve
+    end
+    % Calculate probability based on event power for each type of class
+    % label
+    
+    
+    %subplot(4,1,1)
+    hold on
+    plot(eventNumVec,AUC)
+    hold off
+    
+    %subplot(4,1,2)
+    
+   
+    %subplot(4,1,3)
+    
+    
+    %subplot(4,1,4)
+    
+    
+end
 end

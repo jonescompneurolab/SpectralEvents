@@ -1,48 +1,45 @@
 function [specEv_struct, TFRs, X] = spectralevents(eventBand, analyze, fVec, Fs, varargin)
-% spectralevents returns a structure array of spectral event features (calculated
-% on a trial-by-trial basis from collections of time-series trials)
-% comparing various experimental conditions between trials, where 
-% elements of the array correspond to the time-frequency responses of the
-% subjects/sessions, respectively.
-%
-% Examples:
-% [specEvents,TFRs,X] = spectralevents(eventBand,analyze,fVec,Fs,X,classLabels)
-%
+% SPECTRALEVENTS Find and analyze spectral events (local maxima above a 
+%   power threshold) of a specified band in the non-averaged time-frequency
+%   response (TFR) in a dataset.
+%   [specEv_struct,TFRs,X] = SPECTRALEVENTS(eventBand,analyze,fVec,Fs,X,classLabels)
 %   or
+%   [specEv_struct,TFRs,X] = SPECTRALEVENTS(eventBand,analyze,fVec,Fs,X{1},classLabels{1},X{2},classLabels{2},...)
+%   returns a structure array of spectral event features (specEv_struct),
+%   cell array containing the time-frequency responses (TFRs), and cell 
+%   array of all time-series trials (X) for each subject/session within the
+%   dataset comparing various experimental conditions or outcome states 
+%   corresponding to each trial.
 %
-% [specEvents,TFRs,X] = spectralevents(eventBand,analyze,fVec,Fs,X{1},classLabels{1},X{2},classLabels{2},...)
+% Inputs:
+%   fVec - frequency vector (Hz) over which the time-frequency response (TFR) is 
+%       calcuated. Note that this set must fall
+%       within the range of resolvable frequency values (i.e. Fmin>=1/(trial
+%       duration), Fmax<=(Nyquist freq)).
+%   eventBand - range of frequencies ([Fmin_event Fmax_event]; Hz) over which above-threshold spectral
+%       power events are classified.
+%   Fs - sampling frequency (Hz).
+%   analyze - logical value that determines whether to run basic feature 
+%       analysis and output standard figures.
+%   X{a} - m-by-n matrix (of the a^th subject/session cell in cell array X) 
+%       representing the time-series trials of the given subject. m is the number
+%       of timepoints and n is the number of trials. Note that m timepoints must 
+%       be uniform across all trials and subjects.
+%   classLabels{a} - trial classification labels (of the a^th subject/session
+%       cell in cell array classLabels); specifies the classification label 
+%       (e.g. hit or miss, detect or non-detect, attend-to or attend away) 
+%       corresponding to the experimental condition of a given trial in the 
+%       subject/session. If classLabels_{A} is entered as a single value, 0 or 1,
+%       all trials in subject/session A are associated with that label. 
+%       Alternatively, classLabels_{A} can be entered as a vector of binary values
+%       with m elements, each corresponding to a trial within subject/session A.
 %
-% In:
-% fVec - frequency vector (Hz) over which the time-frequency response (TFR) is 
-% calcuated. Note that this set must fall
-% within the range of resolvable frequency values (i.e. Fmin>=1/(trial
-% duration), Fmax<=(Nyquist freq)).
-% 
-% eventBand - range of frequencies ([Fmin_event Fmax_event]; Hz) over which above-threshold spectral
-% power events are classified
+% Outputs:
+%   specEvents - 
+%   TFRs - 
+%   X - 
 %
-% Fs - sampling frequency (Hz)
-%
-% analyze - logical value that determines whether to run basic feature 
-% analysis and output standard figures
-%
-% X{a} - m-by-n matrix (of the a^th subject/session cell in cell array X) 
-% representing the time-series trials of the given subject. m is the number
-% of timepoints and n is the number of trials. Note that m timepoints must 
-% be uniform across all trials and subjects.
-% 
-% classLabels{a} - trial classification labels (of the a^th subject/session
-% cell in cell array classLabels); specifies the classification label 
-% (e.g. hit or miss, detect or non-detect, attend-to or attend away) 
-% corresponding to the experimental condition of a given trial in the 
-% subject/session. If classLabels_{A} is entered as a single value, 0 or 1,
-% all trials in subject/session A are associated with that label. 
-% Alternatively, classLabels_{A} can be entered as a vector of binary values
-% with m elements, each corresponding to a trial within subject/session A.
-%
-% Out:
-% specEvents - 
-% TFRs - 
+% See also SPECTRALEVENTS_FIND, SPECTRALEVENTS_ANALYSIS.
 
 % Validate number of time-series (X{1}, X{2},...) and trial class label (classLabels{1}, classLabels{2},...) inputs
 if nargin-4>=2
