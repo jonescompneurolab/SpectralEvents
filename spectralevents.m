@@ -29,15 +29,18 @@ function [specEv_struct, TFRs, X] = spectralevents(eventBand, analyze, fVec, Fs,
 %       cell in cell array classLabels); specifies the classification label 
 %       (e.g. hit or miss, detect or non-detect, attend-to or attend away) 
 %       corresponding to the experimental condition of a given trial in the 
-%       subject/session. If classLabels_{A} is entered as a single value, 0 or 1,
-%       all trials in subject/session A are associated with that label. 
-%       Alternatively, classLabels_{A} can be entered as a vector of binary values
-%       with m elements, each corresponding to a trial within subject/session A.
+%       subject/session. If classLabels{a} is entered as a single value, 0 or 1,
+%       all trials in the a^th subject/session are associated with that label. 
+%       Alternatively, classLabels{a} can be entered as a vector of binary values
+%       with n elements, each corresponding to a trial within the a^th subject/session.
 %
 % Outputs:
-%   specEvents - 
-%   TFRs - 
-%   X - 
+%   specEv_struct - array of event feature structures, each corresponding
+%       with a subject/session, respectively.
+%   TFRs - cell array with each cell containing the TFR for a given
+%       subject/session
+%   X - cell array with each cell containing the time-series trials for a
+%       given subject/session
 %
 % See also SPECTRALEVENTS_FIND, SPECTRALEVENTS_ANALYSIS.
 
