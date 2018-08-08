@@ -1,6 +1,6 @@
 % This test script implements the main pipeline of the spectralevents 
-% toolbox. All data is taken from sessions used in Shin et al. eLife 2017
-% (http://dx.doi.org/10.5061/dryad.pn931).
+% toolbox. The datasets referenced below are from sessions used in Shin et 
+% al. eLife 2017 (http://dx.doi.org/10.5061/dryad.pn931).
 
 clear all
 

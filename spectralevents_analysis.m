@@ -1,9 +1,7 @@
 function spectralevents_analysis(specEv_struct, timeseries, TFRs, tVec, fVec)
 % SPECTRALEVENT_ANALYSIS(specEv_struct,timeseries,TFRs,tVec,fVec) conducts 
-%   basic analysis on the spectral event features and generates spectrogram
-%   and probability histogram plots comparing trial classification labels 
-%   (experimental conditions or outcome states) across 
-%   subjects/sessions.
+%   basic analysis for the purpose of visualizing dataset spectral event 
+%   features and generates spectrogram and probability histogram plots.
 %
 % Inputs:
 %   specEv_struct - spectralevents structure array.
@@ -40,75 +38,126 @@ for subj_i=1:numSubj
     for cls_i=1:numel(classes)
         trial_inds = find(classLabels==classes(cls_i)); %Indices of TFR trials corresponding with the given class
         
-        % Plot average TFR for a given subject/session
-        avgTFR = mean(TFR(:,:,trial_inds),3);
-        %figure(2*(subj_i-1)+cls_i)
+        % Calculate average TFR for a given subject/session and determine
+        % number of trials to sample
+        if numel(trial_inds)>10
+            numSampTrials = 10;
+            if numel(trial_inds)>1
+                avgTFR = mean(TFR(:,:,trial_inds),3);
+            else
+                avgTFR = squeeze(TFR);
+            end
+        else
+            numSampTrials = numel(trial_inds);
+        end
+        
+        % Find sample trials to view
+        rng('default');
+        randTrial_inds = randperm(numel(trial_inds),numSampTrials); %Sample trial indices
+        
+        % Plot average TFR
         figure
-        subplot(14,1,(1:4))
-        %clims = [0 1200];
+        pos_1 = [0.09 0.75 0.8 0.17];
+        subplot('Position',pos_1)
         imagesc([tVec(1) tVec(end)],[fVec(1) fVec(end)],avgTFR)
-        %imagesc([tVec(1) tVec(end)],[fVec(1) fVec(40)],avgTFR(1:40,:),clims)
-        colormap jet
-        colorbar
+        set(gca,'xtick',[])
+        set(gca,'xticklabel',[])
+        set(gca,'ytick',[fVec(1),eventBand,fVec(end)])
         ylabel('Hz')
+        pos = get(gca,'position');
+        colormap jet
+        cb = colorbar;
+        pos([1,3]) = [0.91 0.01];
+        set(cb,'position',pos)
         hold on
         line(tVec',repmat(eventBand,length(tVec),1)','Color','k','LineStyle',':')
         hold off
         title(['Dataset ',num2str(subj_i),', Trial class ',num2str(classes(cls_i))])
         
         % Plot 10 randomly sampled TFR trials
-        rng('default');
-        randTrial_inds = randperm(numel(trial_inds),10); %Sample trial indices
         clims = [0 mean(eventThr(eventBand_inds))*1.3]; %Standardize upper spectrogram scaling limit based on the average event threshold
         for trl_i=1:10
-            subplot(14,1,trl_i+4)
+            pos_2 = [0.09 0.75-(0.065*trl_i) 0.8 0.05];
+            subplot('Position',pos_2)
             imagesc([tVec(1) tVec(end)],eventBand,TFR(eventBand_inds(1):eventBand_inds(end),:,trial_inds(randTrial_inds(trl_i))),clims)
+            x_ticks = get(gca,'xtick');
+            x_tick_labels = get(gca,'xticklabels');
+            set(gca,'xtick',[])
+            set(gca,'xticklabel',[])
+            set(gca,'ytick',eventBand)
+            pos = get(gca,'position');
             colormap jet
-            colorbar
+            
+            % Overlay locations of event peaks and the waveform corresponding with each trial
             hold on
             plot(maximaTiming(trialInd==trial_inds(randTrial_inds(trl_i))),maximaFreq(trialInd==trial_inds(randTrial_inds(trl_i))),'w.') %Add points at event maxima
             yyaxis right
-            plot(tVec,timeseries{subj_i}(:,trial_inds(randTrial_inds(trl_i))))
+            plot(tVec,timeseries{subj_i}(:,trial_inds(randTrial_inds(trl_i))),'w')
+            set(gca,'ytick',[])
+            set(gca,'yticklabel',[])
             hold off
         end
+        cb = colorbar;
+        pos([1,3]) = [0.91 0.01];
+        set(cb,'position',pos)
+        set(gca,'xtick',x_ticks)
+        set(gca,'xticklabel',x_tick_labels)
         xlabel('s')
     end
 end
 
-% Event feature probability histograms
-%eventNumVec = (0:5);
-
+% Event feature probability histograms (see Figure 5 in Shin et al. eLife 2017)
+features = {'eventnumber','maximapowerFOM','duration','Fspan'}; %Fields within specEv_struct
+feature_names = {'event number','event power (FOM)','event duration (ms)','event F-span (Hz)'}; %Full names describing each field
 figure
-features = {'eventnumber','meaneventpower','meaneventduration','meaneventFspan'};
 for feat_i=1:numel(features)
     feature_agg = [];
     classLabels_agg =[];
     for subj_i=1:numSubj
-        featInd = specEv_struct(subj_i).TrialSummary.SumInd.(features{feat_i});
-        feature_agg = [feature_agg; specEv_struct(subj_i).TrialSummary.TrialSummary(:,featInd)];
-        classLabels_agg = [classLabels_agg; specEv_struct(subj_i).TrialSummary.ClassLabels];
+        % Feature-specific considerations
+        if isequal(features{feat_i},'eventnumber')
+            featInd = specEv_struct(subj_i).TrialSummary.SumInd.(features{feat_i});
+            feature_agg = [feature_agg; specEv_struct(subj_i).TrialSummary.TrialSummary(:,featInd)];
+            classLabels_agg = [classLabels_agg; specEv_struct(subj_i).TrialSummary.ClassLabels];
+        else
+            if isequal(features{feat_i},'duration')
+                feature_agg = [feature_agg; specEv_struct(subj_i).Events.RhythmEvents.(features{feat_i}) * 1000]; %Note: convert from s->ms
+            else
+                feature_agg = [feature_agg; specEv_struct(subj_i).Events.RhythmEvents.(features{feat_i})];
+            end
+            classLabels_agg = [classLabels_agg; specEv_struct(subj_i).Events.RhythmEvents.classLabels];
+        end
     end
     
-    classes = unique(classLabels_agg);
-    [featCounts_agg,bins] = histcounts(feature_agg); %Standardize bins for all class label cases
-    featProb_agg = featCounts_agg./sum(featCounts_agg);
-    featProb_agg(isnan(featProb_agg)) = 0; %Correct for NaN values resulting from dividing by 0 counts
-    subplot(numel(features),1,feat_i)
+    [featProb_agg,bins] = histcounts(feature_agg,'Normalization','probability'); %Standardize bins for all class label cases
     
+    % Correct to show left-side dropoff of histogram if applicable
+    if bins(2)-(bins(2)-bins(1))/2>0
+        bins = [bins(1)-(bins(2)-bins(1)),bins];
+        featProb_agg = histcounts(feature_agg,bins,'Normalization','probability');
+    end
+    featProb_agg(isnan(featProb_agg)) = 0; %Correct for NaN values resulting from dividing by 0 counts
+    
+    % Calculate and plot for each subject
+    subplot(numel(features),1,feat_i)
     for subj_i=1:numSubj
-        %flag = false;
-        featInd = specEv_struct(subj_i).TrialSummary.SumInd.(features{feat_i});
-        %trials = ismember(specEv_struct(subj_i).TrialSummary.TrialSummary(:,featInd),eventNumVec); %Only consider trials with event number values within eventNumVec
-        feature = specEv_struct(subj_i).TrialSummary.TrialSummary(:,featInd);
-        classLabels = specEv_struct(subj_i).TrialSummary.ClassLabels;
+        % Feature-specific considerations
+        if isequal(features{feat_i},'eventnumber')
+            featInd = specEv_struct(subj_i).TrialSummary.SumInd.(features{feat_i});
+            feature = specEv_struct(subj_i).TrialSummary.TrialSummary(:,featInd);
+        else
+            feature = specEv_struct(subj_i).Events.RhythmEvents.(features{feat_i});
+            if isequal(features{feat_i},'duration')
+                feature = feature*1000; %Convert from s->ms
+            end
+        end
 
         % Calculate probability based on event number for each type of class
         % label (rows = event number; columns = class label). Only consider
         % subjects/sessions that include trials of all class labels for each
         % event number in eventNumVec
         
-        featCounts = histcounts(feature,bins);
-        featProb = featCounts./sum(featCounts);
+        featProb = histcounts(feature,bins,'Normalization','probability');
         featProb(isnan(featProb)) = 0; %Correct for NaN values resulting from dividing by 0 counts
         hold on
         plot(bins(2:end)-diff(bins)/2,featProb)
@@ -117,8 +166,9 @@ for feat_i=1:numel(features)
     hold on
     plot(bins(2:end)-diff(bins)/2,featProb_agg,'k-','LineWidth',2)
     hold off
-        
-        
+    xlim([bins(2)-(bins(2)-bins(1))/2,bins(find(cumsum(featProb_agg)>=0.95,1))]) %Lower limit: smallest mid-bin; upper limit: 95% cdf interval
+    xlabel(feature_names{feat_i})
+    ylabel('probability')
         
 %         for evNum_i=1:numel(eventNumVec)
 %             eventNum_trials = (eventNum==eventNumVec(evNum_i));
