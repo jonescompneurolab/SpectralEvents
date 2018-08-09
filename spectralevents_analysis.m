@@ -57,8 +57,8 @@ for subj_i=1:numSubj
         
         % Plot average TFR
         figure
-        pos_1 = [0.09 0.75 0.8 0.17];
-        subplot('Position',pos_1)
+        %pos_1 = [0.09 0.75 0.8 0.17];
+        subplot('Position',[0.09 0.75 0.8 0.17])
         imagesc([tVec(1) tVec(end)],[fVec(1) fVec(end)],avgTFR)
         set(gca,'xtick',[])
         set(gca,'xticklabel',[])
@@ -67,8 +67,8 @@ for subj_i=1:numSubj
         pos = get(gca,'position');
         colormap jet
         cb = colorbar;
-        pos([1,3]) = [0.91 0.01];
-        set(cb,'position',pos)
+        %pos([1,3]) = [0.91 0.01];
+        set(cb,'position',[0.9 pos(2) 0.01 pos(4)])
         hold on
         line(tVec',repmat(eventBand,length(tVec),1)','Color','k','LineStyle',':')
         hold off
@@ -77,8 +77,8 @@ for subj_i=1:numSubj
         % Plot 10 randomly sampled TFR trials
         clims = [0 mean(eventThr(eventBand_inds))*1.3]; %Standardize upper spectrogram scaling limit based on the average event threshold
         for trl_i=1:10
-            pos_2 = [0.09 0.75-(0.065*trl_i) 0.8 0.05];
-            subplot('Position',pos_2)
+            %pos_2 = [0.09 0.75-(0.065*trl_i) 0.8 0.05];
+            subplot('Position',[0.09 0.75-(0.065*trl_i) 0.8 0.05])
             imagesc([tVec(1) tVec(end)],eventBand,TFR(eventBand_inds(1):eventBand_inds(end),:,trial_inds(randTrial_inds(trl_i))),clims)
             x_ticks = get(gca,'xtick');
             x_tick_labels = get(gca,'xticklabels');
@@ -98,8 +98,8 @@ for subj_i=1:numSubj
             hold off
         end
         cb = colorbar;
-        pos([1,3]) = [0.91 0.01];
-        set(cb,'position',pos)
+        %pos([1,3]) = [0.91 0.01];
+        set(cb,'position',[0.9 pos(2) 0.01 pos(4)])
         set(gca,'xtick',x_ticks)
         set(gca,'xticklabel',x_tick_labels)
         xlabel('s')
@@ -129,7 +129,9 @@ for feat_i=1:numel(features)
         end
     end
     
-    [featProb_agg,bins] = histcounts(feature_agg,'Normalization','probability'); %Standardize bins for all class label cases
+    % Calculate probability of aggregate (accross subjects/sessions) and 
+    % standardize bins
+    [featProb_agg,bins] = histcounts(feature_agg,'Normalization','probability'); 
     
     % Correct to show left-side dropoff of histogram if applicable
     if bins(2)-(bins(2)-bins(1))/2>0
@@ -152,11 +154,7 @@ for feat_i=1:numel(features)
             end
         end
 
-        % Calculate probability based on event number for each type of class
-        % label (rows = event number; columns = class label). Only consider
-        % subjects/sessions that include trials of all class labels for each
-        % event number in eventNumVec
-        
+        % Calculate probability for each subject
         featProb = histcounts(feature,bins,'Normalization','probability');
         featProb(isnan(featProb)) = 0; %Correct for NaN values resulting from dividing by 0 counts
         hold on
@@ -169,72 +167,6 @@ for feat_i=1:numel(features)
     xlim([bins(2)-(bins(2)-bins(1))/2,bins(find(cumsum(featProb_agg)>=0.95,1))]) %Lower limit: smallest mid-bin; upper limit: 95% cdf interval
     xlabel(feature_names{feat_i})
     ylabel('probability')
-        
-%         for evNum_i=1:numel(eventNumVec)
-%             eventNum_trials = (eventNum==eventNumVec(evNum_i));
-%             feature_counts(cls_i) = histcounts(feature_PCM,'BinWidth',1);
-% %             for cls_i=1:numel(classes) 
-% %                 eventNum_counts(cls_i) = nnz(classLabels(eventNum_trials)==classes(cls_i)); %Counts of a given event number and given class
-% %             end
-% 
-%             % Check to ensure all subjects/sessions include trials of a given
-%             % event number across all class label types
-%             if nnz(eventNum_counts==0)>0
-%                 flag = true;
-%                 break
-%             end
-% 
-%             eventNum_prob = eventNum_counts./sum(eventNum_counts); %Normalize to the total counts of a given event number across classes: P(classLabel|eventNum)
-%             %predLabels(eventNum_trials) = classes(find(max(eventNum_prob),1)); %Most probable class for the event number given all relevant oberservations
-%         end
-% 
-%         % Skip subject/session if flagged
-%         if flag==true
-%             disp('Flag!!!!!!!')
-%             AUC(subj_i) = nan;
-%             continue
-%         end
-%         %stuff = [classLabels predLabels]
-%         [x,y,~,AUC(subj_i)] = perfcurve(classLabels,eventNumPCM,'1'); %Hit probability: AUC of ROC curve
-% 
-%          figure
-%          plot(x,y)
-
-
-
-    %     %eventNum_prob = eventNum_counts./repmat(sum(eventNum_counts,2),1,numel(classes)); %Normalize to the total counts of a given event number across classes
-    %     %eventNum_prob(isnan(eventNum_prob)) = 0; %Correct for NaN values resulting from dividing by 0
-    %     predModel = double(eventNum_prob > 0.5); %Binary predictive model based on most-probable class label
-    %     predLabel = nan(size(eventNum)); %Array for storing predicted class labels
-    %     for trl_i=1:numTrials
-    %         predLabel(trl_i) = squeeze(predModel(eventNumVec==eventNum(trl_i),2)); %Predicted class labels
-    %     end
-    %     
-    %     prob_AUC = nan(size(eventNumVec));
-    %     for evNum_i=1:numel(eventNumVec)
-    %         stuff = [classLabels(eventNum==eventNumVec(evNum_i)) predLabel(eventNum==eventNumVec(evNum_i))]
-    %         [~,~,~,AUC] = perfcurve(classLabels(eventNum==eventNumVec(evNum_i)),predLabel(eventNum==eventNumVec(evNum_i)),1);
-    %         prob_AUC(evNum_i) = AUC; %Hit probability: AUC of ROC curve
-    %     end
-    % 
-    %     % Calculate probability based on event power for each type of class
-    %     % label
-    %     
-    %     
-    %     %subplot(4,1,1)
-    %     hold on
-    %     plot(eventNumVec,prob_AUC)
-    %     hold off
-    %     
-    %     %subplot(4,1,2)
-    %     
-    %    
-    %     %subplot(4,1,3)
-    %     
-    %     
-    %     %subplot(4,1,4)
-
-
 end
 
 end

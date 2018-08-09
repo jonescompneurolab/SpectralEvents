@@ -9,14 +9,16 @@ function [specEv_struct, TFRs, X] = spectralevents(eventBand, analyze, fVec, Fs,
 %   cell array containing the time-frequency responses (TFRs), and cell 
 %   array of all time-series trials (X) for each subject/session within the
 %   dataset comparing various experimental conditions or outcome states 
-%   corresponding to each trial.
+%   corresponding to each trial. Note: this function sets the factors of
+%   median threshold (thrFOM) at 6.
 %
 % Inputs:
-%   fVec - frequency vector (Hz) over which the time-frequency response (TFR) is 
-%       calcuated. Note that this set must fall
-%       within the range of resolvable frequency values (i.e. Fmin>=1/(trial
-%       duration), Fmax<=(Nyquist freq)).
-%   eventBand - range of frequencies ([Fmin_event Fmax_event]; Hz) over which above-threshold spectral
+%   fVec - frequency vector (Hz) over which the time-frequency response 
+%       (TFR) is calcuated. Note that this set must fall within the range 
+%       of resolvable/alias-free frequency values (i.e. Fmin>=1/(trial duration), 
+%       Fmax<=(Nyquist freq)).
+%   eventBand - range of frequencies ([Fmin_event Fmax_event]; Hz) over 
+%       which above-threshold spectral
 %       power events are classified.
 %   Fs - sampling frequency (Hz).
 %   analyze - logical value that determines whether to run basic feature 
@@ -25,22 +27,26 @@ function [specEv_struct, TFRs, X] = spectralevents(eventBand, analyze, fVec, Fs,
 %       representing the time-series trials of the given subject. m is the number
 %       of timepoints and n is the number of trials. Note that m timepoints must 
 %       be uniform across all trials and subjects.
-%   classLabels{a} - trial classification labels (of the a^th subject/session
-%       cell in cell array classLabels); specifies the classification label 
-%       (e.g. hit or miss, detect or non-detect, attend-to or attend away) 
-%       corresponding to the experimental condition of a given trial in the 
-%       subject/session. If classLabels{a} is entered as a single value, 0 or 1,
-%       all trials in the a^th subject/session are associated with that label. 
-%       Alternatively, classLabels{a} can be entered as a vector of binary values
-%       with n elements, each corresponding to a trial within the a^th subject/session.
+%   classLabels{a} - numeric or logical trial classification labels (of the
+%       a^th subject/session cell in cell array classLabels); associates 
+%       each trial of the given subject/session to an experimental 
+%       condition/outcome/state (e.g., hit or miss, detect or non-detect, 
+%       attend-to or attend away). If classLabels{a} is entered as a single
+%       value (e.g., 0 or 1), all trials in the a^th subject/session are 
+%       associated with that label. Alternatively, classLabels{a} can be 
+%       entered as a vector of n elements, each corresponding to a trial 
+%       within the a^th subject/session.
 %
 % Outputs:
 %   specEv_struct - array of event feature structures, each corresponding
 %       with a subject/session, respectively.
 %   TFRs - cell array with each cell containing the TFR for a given
-%       subject/session
+%       subject/session.
 %   X - cell array with each cell containing the time-series trials for a
-%       given subject/session
+%       given subject/session.
+%
+% Dependencies:
+%   4DToolbox by Ole Jensen, Helsinki University of Technology
 %
 % See also SPECTRALEVENTS_FIND, SPECTRALEVENTS_ANALYSIS.
 
@@ -55,18 +61,22 @@ if nargin-4>=2
         error('Must specify classification labels alongside each subject/session dataset!')
     end
 else
-    error('Must input at least one time-series dataset and its corresponding trial classification label/vector!')
+    error('Must input at least one time-series dataset and its corresponding trial classification label/vector.')
 end
 
 % Validate format of trial class labels and reformat if necessary
 numSubj = numel(X); %Number of subjects/sessions
 for subj_i=1:numSubj
+    if ~(isnumeric(classLabels{subj_i}) || islogical(classLabels{subj_i}))
+        error('Trial classification labels must be numeric or logical.')
+    end
+    
     if numel(classLabels{subj_i})==1
         classLabels{subj_i} = ones(1,size(X{subj_i},2))*classLabels{subj_i}; %Reformat if entered as single values instead of vectors
     elseif isequal(size(classLabels{subj_i}),[size(X{subj_i},2),1])
         classLabels{subj_i} = classLabels{subj_i}';
     elseif ~isequal(size(classLabels{subj_i}),[1,size(X{subj_i},2)])
-        error('Trial classification labels are formatted incorrectly!')
+        error('Trial classification labels must be formatted as either a 1-row array or single value.')
     end
 end
 

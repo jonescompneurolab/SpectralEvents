@@ -1,24 +1,57 @@
 function specEv_struct = spectralevents_find(eventBand, thrFOM, tVec, fVec, TFR, classLabels)
-% 1) Retrieve all local maxima in TFR using imregionalmax
-% 2) Pick out maxima for the frequency band (eventBand) of interest
-% 3) 
+% SPECTRALEVENTS_FIND Algorithm for finding and calculating spectral events
+%   on a trial-by-trial basis of of a single subject/session. Uses the 
+%   following method:
+%   1) Retrieve all local maxima in TFR using imregionalmax
+%   2) Pick out maxima within the frequency band (eventBand) of interest
+%   3) Threshold maxima and classify events
+%   4) Identify and organize event features
+%
+% Inputs:
+%   eventBand - range of frequencies ([Fmin_event Fmax_event]; Hz) over 
+%       which above-threshold spectral power events are classified.
+%   thrFOM - factors of median threshold; positive real number used to
+%       threshold local maxima and classify events (see Shin et al. eLife 
+%       2017 for discussion concerning this value).
+%   tVec - time vector (s) over which the time-frequency response (TFR) is 
+%       calcuated.
+%   fVec - frequency vector (Hz) over which the time-frequency response 
+%       (TFR) is calcuated.
+%   TFR - time-frequency response (TFR) (frequency-by-time-trial) for a
+%       single subject/session.
+%   classLabels - numeric or logical 1-row array of trial classification 
+%       labels; associates each trial of the given subject/session to an 
+%       experimental condition/outcome/state (e.g., hit or miss, detect or 
+%       non-detect, attend-to or attend away).
+%
+% Outputs:
+%   specEv_struct - event feature structure.
+%
+% See also SPECTRALEVENTS, SPECTRALEVENTS_ANALYSIS.
 
-
+% Initialize general data parameters
 eventBand_inds = fVec(fVec>=eventBand(1) & fVec<=eventBand(2)); %Indices of freq vector within eventBand
-trial_duration = tVec(end)-tVec(1); %Duration of time trial
 flength = size(TFR,1); %Number of elements in discrete frequency spectrum
 tlength = size(TFR,2); %Number of points in time
 numtrials = size(TFR,3); %Number of trials
-%time_inds = (1:length(tVec)); %Indices of timepoints corresponding to time vector
 
-%%%% (1) %%%%
+% Validate consistency of parameter dimensions
+if flength~=length(fVec) || tlength~=length(tVec) || numtrials~=length(classLabels)
+    error('Mismatch in input parameter dimensions!')
+end
 
-% TFRlocalmax: 12 column matrix for storing local max event metrics: trial index,
-% hit/miss, maxima frequency, lowerbound frequency, upperbound frequency,
-% frequency span, maxima timing, event onset timing, event offset timing, event duration, maxima power, maxima/median power
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% (1) Retrieve all local maxima in TFR using imregionalmax
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% TFRlocalmax: 12 column matrix for storing local max event metrics: trial 
+% index, hit/miss, maxima frequency, lowerbound frequency, upperbound 
+% frequency, frequency span, maxima timing, event onset timing, event 
+% offset timing, event duration, maxima power, maxima/median power
 TFRlocalmax = [];
 
-% Finds_localmax: stores peak frequecy at each local max (columns) for each trial (rows)
+% Finds_localmax: stores peak frequecy at each local max (columns) for each
+% trial (rows)
 Finds_localmax = [];
 
 % Retrieve all local maxima in TFR using imregionalmax
@@ -81,32 +114,21 @@ end
 medianpower = median(reshape(TFR, size(TFR,1), size(TFR,2)*size(TFR,3)), 2); %Median power at each frequency across all trials
 TFRlocalmax = [TFRlocalmax TFRlocalmax(:,11)./medianpower(Finds_localmax)]; %Append column with peak power normalized to median power
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% (2) Pick out maxima within the frequency band (eventBand) of interest
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%% (2) %%%%
-
-%rhythmtfr = TFR(:,time_inds,:);
-%rhythmmedian=median(reshape(rhythmtfr, size(rhythmtfr,1), size(rhythmtfr,2)*size(rhythmtfr,3)), 2);
-
-%rhythmlmi = find(TFRlocalmax(:,3)>=fVec(eventBand_inds(1)) & TFRlocalmax(:,3)<=fVec(eventBand_inds(end)) & TFRlocalmax(:,7)>=-trial_duration & TFRlocalmax(:,7)<0);
 eventBand_lmi = find(TFRlocalmax(:,3)>=eventBand(1) & TFRlocalmax(:,3)<=eventBand(2)); %Indices of local maxima within the specified event freq band
-
-%prestimrhythmlocalmax = zeros(numel(eventBand_lmi),size(TFRlocalmax,2)+1);
-%prestimrhythmlocalmax(:,size(TFRlocalmax,2)+1)=prestimrhythmlocalmax(:,11)./medianpower(Finds_localmax(eventBand_lmi)); %Add column with peak power normalized to median power
 eventBand_locmax = TFRlocalmax(eventBand_lmi,:); %Select local maxima within the specified event freq band
+clear TFRlocalmax
 
-%TFRmedian=median(reshape(TFR, size(TFR,1), size(TFR,2)*size(TFR,3)), 2);
-%TFRlocalmax=[TFRlocalmax TFRlocalmax(:,11)./medianpower(TFRlocalmax(:,3))]; %Add column with peak power normalized to median power
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% (3) Threshold maxima and classify events
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 thr = thrFOM*medianpower; %Spectral event threshold
 
-if flength~=length(fVec) || tlength~=length(tVec) || numtrials~=length(classLabels)
-    error('mismatch in input parameter dimensions')
-end
-
-%%% matrix if event features: each row is an event
-%load(strcat(resultPath, rhythmid, 'localmax_', datatypeid, '_', subject_list{subjind}, '.mat'));
-clear TFRlocalmax
+% Matrix of event features: each row is an event
 % 11 column matrix with 1. trial index, 2. hit/miss, 3. maxima frequency, 4. lowerbound frequency, 5. upperbound frequency, 6. frequency span, ...
 % 7. maxima timing, 8. event onset timing, 9. event offset timing, 10. event duration, 11. maxima power, 12. maxima/median power
 rhythmevents_columnlabel={'trialind', 'classLabels', 'maximafreq', 'lowerboundFspan', 'upperboundFspan', 'Fspan', ...
@@ -118,7 +140,11 @@ eventinds = eventBand_locmax(:,eventsind.maximapower)>=thr(Finds_localmax(eventB
 rhythmevents = zeros(nnz(eventinds),numel(rhythmevents_columnlabel));
 rhythmevents(:,1:size(eventBand_locmax,2)) = eventBand_locmax(eventinds,:);
 
-%%% trial summary of event features: each row is a trial
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% (4) Identify and organize event features
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Trial summary of event features: each row is a trial
 clear sumind
 sumind.meanpower=1;
 sumind.coverage=2;
@@ -134,20 +160,20 @@ sumind.mostrecenteventFspan=10;
 indnames=fieldnames(sumind);
 trialSummary=zeros(numtrials,numel(indnames));
 
-% NORMALIZE BASED ON FREQUENCY-SPECIFIC MEDIAN
+% Normalize based on frequency-specific median
 trialSummary(:,sumind.meanpower)= mean(squeeze(mean(TFR(eventBand_inds,:,:),2)) ./ repmat(medianpower(eventBand_inds),1,numtrials), 1);
 
 suprathrTFR = TFR>=repmat(thr,1,tlength,numtrials);
 trialSummary(:,sumind.coverage) = squeeze(sum(sum(suprathrTFR(eventBand_inds,:,:),1),2)) *100 / (numel(eventBand_inds)*tlength); % calculated in percentage
 
-% iterate through trials
+% Iterate through trials
 for tri=1:numtrials
   trialSummary(tri,sumind.eventnumber)=nnz(rhythmevents(:,1)==tri);
   if nnz(rhythmevents(:,1)==tri)==0
     trialSummary(tri,sumind.meaneventpower)=0; % traces2TFR always returns a positive value
     trialSummary(tri,sumind.meaneventduration)=0;
     trialSummary(tri,sumind.meaneventFspan)=0;
-    trialSummary(tri,sumind.mostrecenteventtiming)=-trial_duration-mean(diff(tVec));
+    trialSummary(tri,sumind.mostrecenteventtiming)=tVec(1)-mean(diff(tVec));
     trialSummary(tri,sumind.mostrecenteventpower)=0;
     trialSummary(tri,sumind.mostrecenteventduration)=0;
     trialSummary(tri,sumind.mostrecenteventFspan)=0;
@@ -161,11 +187,8 @@ for tri=1:numtrials
     trialSummary(tri,sumind.mostrecenteventFspan)= rhythmevents(find(rhythmevents(:,eventsind.trialind)==tri,1,'last'), eventsind.Fspan);
   end
 end
-    
 
-
-%%% PCM and IEI
-
+% PCM and IEI
 specialinds=zeros(7,1); %event depentdent parameters (mean power, mean length, most recent timing): need special treatment for zero event trials
 specialinds(1)=sumind.meaneventpower;
 specialinds(2)=sumind.meaneventduration;
@@ -178,7 +201,7 @@ if nnz(specialinds==0)
     error('Special inds were not assigned correctly.')
 end
 
-% percent change from mean
+% Percent change from mean
 trialSummary_pcm = 100 * (trialSummary-mean(trialSummary,1))./repmat(abs(mean(trialSummary,1)),numtrials,1);
 validtrials = trialSummary(:,sumind.eventnumber)>0 ; % trials that do have events
 trialSummary_pcm(:,specialinds)= 100 * (trialSummary(:,specialinds)-mean(trialSummary(validtrials,specialinds),1)) ./ repmat(abs(mean(trialSummary(validtrials,specialinds),1)),numtrials,1);
@@ -195,8 +218,10 @@ ieitempN=diff(rhythmevents(rhythmevents(:,eventsind.classLabels)==0,eventsind.ma
 sametrialN=(diff(rhythmevents(rhythmevents(:,eventsind.classLabels)==0,eventsind.trialind)) == 0);
 rhythmIEIN= ieitempN(sametrialN);
 
-% Assign output structure with 3 main branches: trial summary (TrialSummary), trial-specific events (Events), and mean inter-event interval across trials (IEI)
-%specEv_struct.TFR = struct('TFR',TFR,'TVec',tVec,'FVec',fVec);
+% Assign output structure with 4 main branches: trial summary 
+% (TrialSummary), event classification parameters (EventParam), 
+% trial-specific events (Events), and mean inter-event interval across 
+% trials (IEI)
 specEv_struct.TrialSummary = struct('ClassLabels',classLabels','NumTrials',numtrials,'SumInd',sumind,'SpecialInds',specialinds,'TrialSummary',trialSummary,'TrialSummary_PCM',trialSummary_pcm);
 specEv_struct.EventParam = struct('EventBand',eventBand,'ThrFOM',thrFOM);
 specEv_struct.Events = struct('MedianPower',medianpower,'Threshold',thr,'RhythmEvents',struct(rhythmevents_columnlabel{1},rhythmevents(:,1),...

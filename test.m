@@ -24,4 +24,3 @@ fVec = (1:60); %Vector of fequency values over which to calculate TFR
 Fs = 600; %Sampling rate of time-series
 %tVec = (0:1/Fs:1);
 [specEvents,TFRs,X] = spectralevents(eventBand,vis,fVec,Fs,x,classLabels); %Run spectral event analysis
-
