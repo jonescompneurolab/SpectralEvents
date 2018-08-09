@@ -7,6 +7,8 @@ function specEv_struct = spectralevents_find(eventBand, thrFOM, tVec, fVec, TFR,
 %   3) Threshold maxima and classify events
 %   4) Identify and organize event features
 %
+% specEv_struct = spectralevents_find(eventBand,thrFOM,tVec,fVec,TFR,classLabels)
+% 
 % Inputs:
 %   eventBand - range of frequencies ([Fmin_event Fmax_event]; Hz) over 
 %       which above-threshold spectral power events are classified.
