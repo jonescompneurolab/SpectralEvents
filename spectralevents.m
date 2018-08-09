@@ -102,7 +102,7 @@ for subj_j=1:numSubj
         TFR = cat(3,TFR,TFR_trl); %Concatenate each trial along the 3rd dimension
     end
     TFRs{subj_j} = TFR; %Append TFR for the given subject
-    
+
     specEv_struct(subj_j) = spectralevents_find(eventBand,thrFOM,tVec,fVec,TFR,classLabels{subj_j}); %Find spectral events
 end
 

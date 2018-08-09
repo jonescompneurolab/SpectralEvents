@@ -22,5 +22,5 @@ eventBand = [15,29]; %Frequency range of spectral events
 vis = true; %Generate standard visualization plots for event features across all subjects/sessions
 fVec = (1:60); %Vector of fequency values over which to calculate TFR
 Fs = 600; %Sampling rate of time-series
-%tVec = (0:1/Fs:1);
-[specEvents,TFRs,X] = spectralevents(eventBand,vis,fVec,Fs,x,classLabels); %Run spectral event analysis
+%tVec = (1/Fs:1/Fs:1);
+[specEvents,TFRs,X] = spectralevents(eventBand,fVec,Fs,vis,x,classLabels); %Run spectral event analysis

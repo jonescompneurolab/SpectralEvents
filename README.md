@@ -62,11 +62,14 @@ Inputs:
 * `tVec` - time vector (s) over which the time-frequency responses are shown.
 * `fVec` - frequency vector (Hz) over which the time-frequency responses are shown.
 
+## Example
+See test script `test.m`.
+
 ## Dependencies
-  * 4DToolbox by Ole Jensen, Helsinki University of Technology
+* 4DToolbox by Ole Jensen, Helsinki University of Technology
 
 ## Contributors:
-  * Hyeyoung Shin, Department of Neuroscience, Brown University, shinehyeyoung@gmail.com
-  * Ryan Thorpe, School of Engineering, Brown University, ryvthorpe@gmail.com
+* Hyeyoung Shin, Department of Neuroscience, Brown University, shinehyeyoung@gmail.com
+* Ryan Thorpe, School of Engineering, Brown University, ryvthorpe@gmail.com
 
 Written for MATLAB R2017b.
