@@ -2,9 +2,8 @@
 
 Find and analyze spectral events (local maxima above a power threshold within a specified band of the non-averaged time-frequency response) in each trial of a dataset.
 
-***
 ## Functions
-##### spectralevents
+### spectralevents
 ```
 [specEv_struct,TFRs,X]=spectralevents(eventBand,analyze,fVec,Fs,X,classLabels)
 ```
@@ -29,7 +28,7 @@ Outputs:
 * `TFRs` - cell array with each cell containing the TFR for a given subject/session.
 * `X` - cell array with each cell containing the time-series trials for a given subject/session.
 
-##### spectralevents_find
+### spectralevents_find
 ```
 specEv_struct = spectralevents_find(eventBand,thrFOM,tVec,fVec,TFR,classLabels)
 ```
@@ -50,7 +49,7 @@ Inputs:
 Outputs:
 * `specEv_struct` - event feature structure.
 
-##### spectralevents_analysis (script)
+### spectralevents_analysis (script)
 ```
 spectralevents_analysis(specEv_struct,timeseries,TFRs, tVec,fVec)
 ```
@@ -63,11 +62,9 @@ Inputs:
 * `tVec` - time vector (s) over which the time-frequency responses are shown.
 * `fVec` - frequency vector (Hz) over which the time-frequency responses are shown.
 
-***
 ## Dependencies
   * 4DToolbox by Ole Jensen, Helsinki University of Technology
 
-***
 ## Contributors:
   * Hyeyoung Shin, Department of Neuroscience, Brown University, shinehyeyoung@gmail.com
   * Ryan Thorpe, School of Engineering, Brown University, ryvthorpe@gmail.com
