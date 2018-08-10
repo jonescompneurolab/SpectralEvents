@@ -34,9 +34,8 @@ specEv_struct = spectralevents_find(eventBand,thrFOM,tVec,fVec,TFR,classLabels)
 ```
 Algorithm for finding and calculating spectral events on a trial-by-trial basis of of a single subject/session. Uses the following method:
 1. Retrieve all local maxima in TFR using imregionalmax
-2. Pick out maxima within the frequency band (eventBand) of interest
-3. Threshold maxima and classify events
-4. Identify and organize event features
+2. Pick out maxima above threshold and within the frequency band (eventBand) of interest
+3. Identify and organize event features
 
 Inputs:
 * `eventBand` - range of frequencies ([Fmin_event Fmax_event]; Hz) over which above-threshold spectral power events are classified.
@@ -47,7 +46,7 @@ Inputs:
 * `classLabels` - numeric or logical 1-row array of trial classification labels; associates each trial of the given subject/session to an experimental condition/outcome/state (e.g., hit or miss, detect or non-detect, attend-to or attend away).
 
 Outputs:
-* `specEv_struct` - event feature structure.
+* `specEv_struct` - event feature structure with three main sub-structures: TrialSummary (trial-level features), Events (individual event characteristics), and IEI (inter-event intervals from all trials and those associated with only a given class label).
 
 ### spectralevents_analysis (script)
 ```

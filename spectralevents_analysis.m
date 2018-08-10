@@ -23,14 +23,14 @@ numSubj = length(specEv_struct); %Number of subjects/sessions
 for subj_i=1:numSubj
     % Extract TFR attributes for given subject/session
     TFR = TFRs{subj_i};
-    classLabels = specEv_struct(subj_i).TrialSummary.ClassLabels;
-    eventBand = specEv_struct(subj_i).EventParam.EventBand;
+    classLabels = specEv_struct(subj_i).TrialSummary.TrialSummary.classLabels;
+    eventBand = specEv_struct(subj_i).Events.EventBand;
     
     % Extract event attributes for a given subject/session 
     eventThr = specEv_struct(subj_i).Events.Threshold;
-    trialInd = specEv_struct(subj_i).Events.RhythmEvents.trialind;
-    maximaTiming = specEv_struct(subj_i).Events.RhythmEvents.maximatiming;
-    maximaFreq = specEv_struct(subj_i).Events.RhythmEvents.maximafreq;
+    trialInd = specEv_struct(subj_i).Events.SpectralEvents.trialind;
+    maximaTiming = specEv_struct(subj_i).Events.SpectralEvents.maximatiming;
+    maximaFreq = specEv_struct(subj_i).Events.SpectralEvents.maximafreq;
     
     eventBand_inds = fVec(fVec>=eventBand(1) & fVec<=eventBand(2)); %Indices of freq vector within eventBand
     classes = unique(classLabels); %Array of unique class labels
@@ -113,20 +113,16 @@ feature_names = {'event number','event power (FOM)','event duration (ms)','event
 figure
 for feat_i=1:numel(features)
     feature_agg = [];
-    classLabels_agg =[];
     for subj_i=1:numSubj
         % Feature-specific considerations
         if isequal(features{feat_i},'eventnumber')
-            featInd = specEv_struct(subj_i).TrialSummary.SumInd.(features{feat_i});
-            feature_agg = [feature_agg; specEv_struct(subj_i).TrialSummary.TrialSummary(:,featInd)];
-            classLabels_agg = [classLabels_agg; specEv_struct(subj_i).TrialSummary.ClassLabels];
+            feature_agg = [feature_agg; specEv_struct(subj_i).TrialSummary.TrialSummary.(features{feat_i})];
         else
             if isequal(features{feat_i},'duration')
-                feature_agg = [feature_agg; specEv_struct(subj_i).Events.RhythmEvents.(features{feat_i}) * 1000]; %Note: convert from s->ms
+                feature_agg = [feature_agg; specEv_struct(subj_i).Events.SpectralEvents.(features{feat_i}) * 1000]; %Note: convert from s->ms
             else
-                feature_agg = [feature_agg; specEv_struct(subj_i).Events.RhythmEvents.(features{feat_i})];
+                feature_agg = [feature_agg; specEv_struct(subj_i).Events.SpectralEvents.(features{feat_i})];
             end
-            classLabels_agg = [classLabels_agg; specEv_struct(subj_i).Events.RhythmEvents.classLabels];
         end
     end
     
@@ -146,10 +142,9 @@ for feat_i=1:numel(features)
     for subj_i=1:numSubj
         % Feature-specific considerations
         if isequal(features{feat_i},'eventnumber')
-            featInd = specEv_struct(subj_i).TrialSummary.SumInd.(features{feat_i});
-            feature = specEv_struct(subj_i).TrialSummary.TrialSummary(:,featInd);
+            feature = specEv_struct(subj_i).TrialSummary.TrialSummary.(features{feat_i});
         else
-            feature = specEv_struct(subj_i).Events.RhythmEvents.(features{feat_i});
+            feature = specEv_struct(subj_i).Events.SpectralEvents.(features{feat_i});
             if isequal(features{feat_i},'duration')
                 feature = feature*1000; %Convert from s->ms
             end

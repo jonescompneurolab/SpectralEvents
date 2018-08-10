@@ -3,9 +3,8 @@ function specEv_struct = spectralevents_find(eventBand, thrFOM, tVec, fVec, TFR,
 %   on a trial-by-trial basis of of a single subject/session. Uses the 
 %   following method:
 %   1) Retrieve all local maxima in TFR using imregionalmax
-%   2) Pick out maxima within the frequency band (eventBand) of interest
-%   3) Threshold maxima and classify events
-%   4) Identify and organize event features
+%   2) Pick out maxima above threshold and within the frequency band (eventBand) of interest
+%   3) Identify and organize event features
 %
 % specEv_struct = spectralevents_find(eventBand,thrFOM,tVec,fVec,TFR,classLabels)
 % 
@@ -27,7 +26,10 @@ function specEv_struct = spectralevents_find(eventBand, thrFOM, tVec, fVec, TFR,
 %       non-detect, attend-to or attend away).
 %
 % Outputs:
-%   specEv_struct - event feature structure.
+%   specEv_struct - event feature structure with three main sub-structures:
+%   TrialSummary (trial-level features), Events (individual event 
+%   characteristics), and IEI (inter-event intervals from all trials and 
+%   those associated with only a given class label).
 %
 % See also SPECTRALEVENTS, SPECTRALEVENTS_ANALYSIS.
 
@@ -35,10 +37,11 @@ function specEv_struct = spectralevents_find(eventBand, thrFOM, tVec, fVec, TFR,
 eventBand_inds = fVec(fVec>=eventBand(1) & fVec<=eventBand(2)); %Indices of freq vector within eventBand
 flength = size(TFR,1); %Number of elements in discrete frequency spectrum
 tlength = size(TFR,2); %Number of points in time
-numtrials = size(TFR,3); %Number of trials
+numTrials = size(TFR,3); %Number of trials
+classes = unique(classLabels);
 
 % Validate consistency of parameter dimensions
-if flength~=length(fVec) || tlength~=length(tVec) || numtrials~=length(classLabels)
+if flength~=length(fVec) || tlength~=length(tVec) || numTrials~=length(classLabels)
     error('Mismatch in input parameter dimensions!')
 end
 
@@ -57,10 +60,9 @@ TFRlocalmax = [];
 Finds_localmax = [];
 
 % Retrieve all local maxima in TFR using imregionalmax
-for ti=1:numtrials
+for ti=1:numTrials
   [peakF,peakT]=find(imregionalmax(squeeze(TFR(:,:,ti)))); %Indices of max local power
   peakpower=TFR(find(imregionalmax(squeeze(TFR(:,:,ti))))+(ti-1)*flength*tlength); %Power values at local maxima (vector; compiles across frequencies and time)
-  %peakpower=TFR(peakF,peakT,ti); %Power values at local maxima
   
   % Find local maxima lowerbound, upperbound, and full width at half max
   % for both frequency and time
@@ -116,120 +118,107 @@ end
 medianpower = median(reshape(TFR, size(TFR,1), size(TFR,2)*size(TFR,3)), 2); %Median power at each frequency across all trials
 TFRlocalmax = [TFRlocalmax TFRlocalmax(:,11)./medianpower(Finds_localmax)]; %Append column with peak power normalized to median power
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% (2) Pick out maxima within the frequency band (eventBand) of interest
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% (2) Pick out maxima above threshold and within the frequency band (eventBand) of interest
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-eventBand_lmi = find(TFRlocalmax(:,3)>=eventBand(1) & TFRlocalmax(:,3)<=eventBand(2)); %Indices of local maxima within the specified event freq band
-eventBand_locmax = TFRlocalmax(eventBand_lmi,:); %Select local maxima within the specified event freq band
+thr = thrFOM*medianpower; %Spectral event threshold for each frequency value
+spectralEvents = TFRlocalmax((TFRlocalmax(:,3)>=eventBand(1) & TFRlocalmax(:,3)<=eventBand(2) & TFRlocalmax(:,11)>=thr(Finds_localmax)),:); %Select local maxima
 clear TFRlocalmax
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% (3) Threshold maxima and classify events
+% (3) Identify and organize event features
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-thr = thrFOM*medianpower; %Spectral event threshold
 
 % Matrix of event features: each row is an event
 % 11 column matrix with 1. trial index, 2. hit/miss, 3. maxima frequency, 4. lowerbound frequency, 5. upperbound frequency, 6. frequency span, ...
 % 7. maxima timing, 8. event onset timing, 9. event offset timing, 10. event duration, 11. maxima power, 12. maxima/median power
-rhythmevents_columnlabel={'trialind', 'classLabels', 'maximafreq', 'lowerboundFspan', 'upperboundFspan', 'Fspan', ...
+spectralEvents_columnlabel={'trialind', 'classLabels', 'maximafreq', 'lowerboundFspan', 'upperboundFspan', 'Fspan', ...
     'maximatiming', 'onsettiming', 'offsettiming', 'duration', 'maximapower', 'maximapowerFOM'};
-for rci=1:numel(rhythmevents_columnlabel)
-  eventsind.(rhythmevents_columnlabel{rci})=rci;
+for rci=1:numel(spectralEvents_columnlabel)
+  eventsind.(spectralEvents_columnlabel{rci})=rci;
 end
-eventinds = eventBand_locmax(:,eventsind.maximapower)>=thr(Finds_localmax(eventBand_lmi));
-rhythmevents = zeros(nnz(eventinds),numel(rhythmevents_columnlabel));
-rhythmevents(:,1:size(eventBand_locmax,2)) = eventBand_locmax(eventinds,:);
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% (4) Identify and organize event features
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% Trial summary of event features: each row is a trial
-clear sumind
-sumind.meanpower=1;
-sumind.coverage=2;
-sumind.eventnumber=3;
-sumind.meaneventpower=4; 
-sumind.meaneventduration=5;
-sumind.meaneventFspan=6;
-sumind.mostrecenteventtiming=7;
-sumind.mostrecenteventpower=8; 
-sumind.mostrecenteventduration=9;
-sumind.mostrecenteventFspan=10;
-
-indnames=fieldnames(sumind);
-trialSummary=zeros(numtrials,numel(indnames));
+trialSummary.classLabels = classLabels';
 
 % Normalize based on frequency-specific median
-trialSummary(:,sumind.meanpower)= mean(squeeze(mean(TFR(eventBand_inds,:,:),2)) ./ repmat(medianpower(eventBand_inds),1,numtrials), 1);
+trialSummary.meanpower = mean(squeeze(mean(TFR(eventBand_inds,:,:),2)) ./ repmat(medianpower(eventBand_inds),1,numTrials), 1)';
 
-suprathrTFR = TFR>=repmat(thr,1,tlength,numtrials);
-trialSummary(:,sumind.coverage) = squeeze(sum(sum(suprathrTFR(eventBand_inds,:,:),1),2)) *100 / (numel(eventBand_inds)*tlength); % calculated in percentage
+suprathrTFR = TFR>=repmat(thr,1,tlength,numTrials);
+trialSummary.coverage = squeeze(sum(sum(suprathrTFR(eventBand_inds,:,:),1),2)) *100 / (numel(eventBand_inds)*tlength); % calculated in percentage
+
+% Initialize column vectors
+trialSummary.eventnumber = nan(numTrials,1);
+trialSummary.meaneventpower = nan(numTrials,1);
+trialSummary.meaneventduration = nan(numTrials,1);
+trialSummary.meaneventFspan = nan(numTrials,1);
+trialSummary.mostrecenteventtiming = nan(numTrials,1);
+trialSummary.mostrecenteventpower = nan(numTrials,1);
+trialSummary.mostrecenteventduration = nan(numTrials,1);
+trialSummary.mostrecenteventFspan = nan(numTrials,1);
 
 % Iterate through trials
-for tri=1:numtrials
-  trialSummary(tri,sumind.eventnumber)=nnz(rhythmevents(:,1)==tri);
-  if nnz(rhythmevents(:,1)==tri)==0
-    trialSummary(tri,sumind.meaneventpower)=0; % traces2TFR always returns a positive value
-    trialSummary(tri,sumind.meaneventduration)=0;
-    trialSummary(tri,sumind.meaneventFspan)=0;
-    trialSummary(tri,sumind.mostrecenteventtiming)=tVec(1)-mean(diff(tVec));
-    trialSummary(tri,sumind.mostrecenteventpower)=0;
-    trialSummary(tri,sumind.mostrecenteventduration)=0;
-    trialSummary(tri,sumind.mostrecenteventFspan)=0;
+for tri=1:numTrials
+  trialSummary.eventnumber(tri)=nnz(spectralEvents(:,1)==tri);
+  if nnz(spectralEvents(:,1)==tri)==0
+    trialSummary.meaneventpower(tri) = 0; % traces2TFR always returns a positive value
+    trialSummary.meaneventduration(tri) = 0;
+    trialSummary.meaneventFspan(tri) = 0;
+    trialSummary.mostrecenteventtiming(tri) = tVec(1)-mean(diff(tVec));
+    trialSummary.mostrecenteventpower(tri) = 0;
+    trialSummary.mostrecenteventduration(tri) = 0;
+    trialSummary.mostrecenteventFspan(tri) = 0;
   else
-    trialSummary(tri,sumind.meaneventpower)=mean(rhythmevents(rhythmevents(:,eventsind.trialind)==tri,eventsind.maximapowerFOM)); % traces2TFR always returns a positive value
-    trialSummary(tri,sumind.meaneventduration)=mean(rhythmevents(rhythmevents(:,eventsind.trialind)==tri,eventsind.duration));
-    trialSummary(tri,sumind.meaneventFspan)=mean(rhythmevents(rhythmevents(:,eventsind.trialind)==tri,eventsind.Fspan));
-    trialSummary(tri,sumind.mostrecenteventtiming)= rhythmevents(find(rhythmevents(:,eventsind.trialind)==tri,1,'last'), eventsind.maximatiming);
-    trialSummary(tri,sumind.mostrecenteventpower)= rhythmevents(find(rhythmevents(:,eventsind.trialind)==tri,1,'last'), eventsind.maximapowerFOM);
-    trialSummary(tri,sumind.mostrecenteventduration)= rhythmevents(find(rhythmevents(:,eventsind.trialind)==tri,1,'last'), eventsind.duration);
-    trialSummary(tri,sumind.mostrecenteventFspan)= rhythmevents(find(rhythmevents(:,eventsind.trialind)==tri,1,'last'), eventsind.Fspan);
+    trialSummary.meaneventpower(tri) = mean(spectralEvents(spectralEvents(:,eventsind.trialind)==tri,eventsind.maximapowerFOM)); % traces2TFR always returns a positive value
+    trialSummary.meaneventduration(tri) = mean(spectralEvents(spectralEvents(:,eventsind.trialind)==tri,eventsind.duration));
+    trialSummary.meaneventFspan(tri) = mean(spectralEvents(spectralEvents(:,eventsind.trialind)==tri,eventsind.Fspan));
+    trialSummary.mostrecenteventtiming(tri) = spectralEvents(find(spectralEvents(:,eventsind.trialind)==tri,1,'last'), eventsind.maximatiming);
+    trialSummary.mostrecenteventpower(tri) = spectralEvents(find(spectralEvents(:,eventsind.trialind)==tri,1,'last'), eventsind.maximapowerFOM);
+    trialSummary.mostrecenteventduration(tri) = spectralEvents(find(spectralEvents(:,eventsind.trialind)==tri,1,'last'), eventsind.duration);
+    trialSummary.mostrecenteventFspan(tri) = spectralEvents(find(spectralEvents(:,eventsind.trialind)==tri,1,'last'), eventsind.Fspan);
   end
 end
 
-% PCM and IEI
-specialinds=zeros(7,1); %event depentdent parameters (mean power, mean length, most recent timing): need special treatment for zero event trials
-specialinds(1)=sumind.meaneventpower;
-specialinds(2)=sumind.meaneventduration;
-specialinds(3)=sumind.meaneventFspan;
-specialinds(4)=sumind.mostrecenteventtiming;
-specialinds(5)=sumind.mostrecenteventpower;
-specialinds(6)=sumind.mostrecenteventduration;
-specialinds(7)=sumind.mostrecenteventFspan;
-if nnz(specialinds==0)
-    error('Special inds were not assigned correctly.')
+% Event dependent features (mean power, mean length, most recent timing): 
+% need special treatment for zero event trials
+specialFeat.field = {'meaneventpower','meaneventduration','meaneventFspan','mostrecenteventtiming',...
+    'mostrecenteventpower','mostrecenteventduration','mostrecenteventFspan'};
+
+% Percent change from mean (PCM)
+trialSum_featNames = fieldnames(trialSummary);
+for feat_i=2:numel(trialSum_featNames)
+    pcm_name = [trialSum_featNames{feat_i},'_pcm'];
+    feature = trialSummary.(trialSum_featNames{feat_i});
+    
+    % Control for features that need special treatment
+    validtrials = trialSummary.eventnumber>0 ; %Trials that do have events
+    if ismember(trialSum_featNames{feat_i},specialFeat.field)
+        trialSummary.(pcm_name) = 100 * (feature-mean(feature(validtrials))) ./ repmat(abs(mean(feature(validtrials))),numTrials,1);
+    else
+        trialSummary.(pcm_name) = 100 * (feature-mean(feature))./repmat(abs(mean(feature)),numTrials,1);
+    end
 end
 
-% Percent change from mean
-trialSummary_pcm = 100 * (trialSummary-mean(trialSummary,1))./repmat(abs(mean(trialSummary,1)),numtrials,1);
-validtrials = trialSummary(:,sumind.eventnumber)>0 ; % trials that do have events
-trialSummary_pcm(:,specialinds)= 100 * (trialSummary(:,specialinds)-mean(trialSummary(validtrials,specialinds),1)) ./ repmat(abs(mean(trialSummary(validtrials,specialinds),1)),numtrials,1);
-    
-ieitemp=diff(rhythmevents(:,eventsind.maximatiming));
-sametrial=(diff(rhythmevents(:,eventsind.trialind))==0);
-rhythmIEI= ieitemp(sametrial);
+% Inter-event interval (IEI)
+ieitemp=diff(spectralEvents(:,eventsind.maximatiming));
+sametrial=(diff(spectralEvents(:,eventsind.trialind))==0);
+IEI.IEI_all = ieitemp(sametrial);
 
-ieitempY=diff(rhythmevents(rhythmevents(:,eventsind.classLabels)==1,eventsind.maximatiming));
-sametrialY=(diff(rhythmevents(rhythmevents(:,eventsind.classLabels)==1,eventsind.trialind)) == 0);
-rhythmIEIY= ieitempY(sametrialY);
+for cls_i=1:numel(classes)
+    fieldName = ['IEI_',num2str(classes(cls_i))];
+    iei_class=diff(spectralEvents(spectralEvents(:,eventsind.classLabels)==classes(cls_i),eventsind.maximatiming));
+    sametrial_class=(diff(spectralEvents(spectralEvents(:,eventsind.classLabels)==classes(cls_i),eventsind.trialind)) == 0);
+    IEI.(fieldName) = iei_class(sametrial_class);
+end
 
-ieitempN=diff(rhythmevents(rhythmevents(:,eventsind.classLabels)==0,eventsind.maximatiming));
-sametrialN=(diff(rhythmevents(rhythmevents(:,eventsind.classLabels)==0,eventsind.trialind)) == 0);
-rhythmIEIN= ieitempN(sametrialN);
-
-% Assign output structure with 4 main branches: trial summary 
-% (TrialSummary), event classification parameters (EventParam), 
-% trial-specific events (Events), and mean inter-event interval across 
-% trials (IEI)
-specEv_struct.TrialSummary = struct('ClassLabels',classLabels','NumTrials',numtrials,'SumInd',sumind,'SpecialInds',specialinds,'TrialSummary',trialSummary,'TrialSummary_PCM',trialSummary_pcm);
-specEv_struct.EventParam = struct('EventBand',eventBand,'ThrFOM',thrFOM);
-specEv_struct.Events = struct('MedianPower',medianpower,'Threshold',thr,'RhythmEvents',struct(rhythmevents_columnlabel{1},rhythmevents(:,1),...
-    rhythmevents_columnlabel{2},rhythmevents(:,2),rhythmevents_columnlabel{3},rhythmevents(:,3),rhythmevents_columnlabel{4},rhythmevents(:,4),...
-    rhythmevents_columnlabel{5},rhythmevents(:,5),rhythmevents_columnlabel{6},rhythmevents(:,6),rhythmevents_columnlabel{7},rhythmevents(:,7),...
-    rhythmevents_columnlabel{8},rhythmevents(:,8),rhythmevents_columnlabel{9},rhythmevents(:,9),rhythmevents_columnlabel{10},rhythmevents(:,10),...
-    rhythmevents_columnlabel{11},rhythmevents(:,11),rhythmevents_columnlabel{12},rhythmevents(:,12)));
-specEv_struct.IEI = struct('RhythmIEI',rhythmIEI,'RhythmIEIY',rhythmIEIY,'RhythmIEIN',rhythmIEIN);
+% Assign output structure with 3 main branches: trial-level summary 
+% (TrialSummary), trial-specific events (Events), and mean inter-event 
+% interval across trials (IEI)
+specEv_struct.TrialSummary = struct('NumTrials',numTrials,'SpecialFeatures',specialFeat,'TrialSummary',trialSummary);
+specEv_struct.Events = struct('EventBand',eventBand,'ThrFOM',thrFOM,'MedianPower',medianpower,'Threshold',thr,'SpectralEvents',struct(spectralEvents_columnlabel{1},spectralEvents(:,1),...
+    spectralEvents_columnlabel{2},spectralEvents(:,2),spectralEvents_columnlabel{3},spectralEvents(:,3),spectralEvents_columnlabel{4},spectralEvents(:,4),...
+    spectralEvents_columnlabel{5},spectralEvents(:,5),spectralEvents_columnlabel{6},spectralEvents(:,6),spectralEvents_columnlabel{7},spectralEvents(:,7),...
+    spectralEvents_columnlabel{8},spectralEvents(:,8),spectralEvents_columnlabel{9},spectralEvents(:,9),spectralEvents_columnlabel{10},spectralEvents(:,10),...
+    spectralEvents_columnlabel{11},spectralEvents(:,11),spectralEvents_columnlabel{12},spectralEvents(:,12)));
+specEv_struct.IEI = IEI;
 end
