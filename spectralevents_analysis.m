@@ -28,9 +28,9 @@ for subj_i=1:numSubj
     
     % Extract event attributes for a given subject/session 
     eventThr = specEv_struct(subj_i).Events.Threshold;
-    trialInd = specEv_struct(subj_i).Events.SpectralEvents.trialind;
-    maximaTiming = specEv_struct(subj_i).Events.SpectralEvents.maximatiming;
-    maximaFreq = specEv_struct(subj_i).Events.SpectralEvents.maximafreq;
+    trialInd = specEv_struct(subj_i).Events.Events.trialind;
+    maximaTiming = specEv_struct(subj_i).Events.Events.maximatiming;
+    maximaFreq = specEv_struct(subj_i).Events.Events.maximafreq;
     
     eventBand_inds = fVec(fVec>=eventBand(1) & fVec<=eventBand(2)); %Indices of freq vector within eventBand
     classes = unique(classLabels); %Array of unique class labels
@@ -119,9 +119,9 @@ for feat_i=1:numel(features)
             feature_agg = [feature_agg; specEv_struct(subj_i).TrialSummary.TrialSummary.(features{feat_i})];
         else
             if isequal(features{feat_i},'duration')
-                feature_agg = [feature_agg; specEv_struct(subj_i).Events.SpectralEvents.(features{feat_i}) * 1000]; %Note: convert from s->ms
+                feature_agg = [feature_agg; specEv_struct(subj_i).Events.Events.(features{feat_i}) * 1000]; %Note: convert from s->ms
             else
-                feature_agg = [feature_agg; specEv_struct(subj_i).Events.SpectralEvents.(features{feat_i})];
+                feature_agg = [feature_agg; specEv_struct(subj_i).Events.Events.(features{feat_i})];
             end
         end
     end
@@ -144,7 +144,7 @@ for feat_i=1:numel(features)
         if isequal(features{feat_i},'eventnumber')
             feature = specEv_struct(subj_i).TrialSummary.TrialSummary.(features{feat_i});
         else
-            feature = specEv_struct(subj_i).Events.SpectralEvents.(features{feat_i});
+            feature = specEv_struct(subj_i).Events.Events.(features{feat_i});
             if isequal(features{feat_i},'duration')
                 feature = feature*1000; %Convert from s->ms
             end
