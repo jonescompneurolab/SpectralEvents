@@ -4,9 +4,10 @@
 
 clear all
 
-% Load data sessions from the same experimental setup so that spectral 
-% event features are characterized for a homogenous set of experimental
-% conditions
+% Load data sessions/subjects from the same experimental setup so that 
+% spectral event features are differentially characterized only between the 
+% desired trial classification labels: in this case, detection vs. 
+% non-detection
 numSubj = 10;
 x = cell(1,numSubj);
 classLabels = cell(1,numSubj);
@@ -23,4 +24,4 @@ vis = true; %Generate standard visualization plots for event features across all
 fVec = (1:60); %Vector of fequency values over which to calculate TFR
 Fs = 600; %Sampling rate of time-series
 %tVec = (1/Fs:1/Fs:1);
-[specEvents,TFRs,X] = spectralevents(eventBand,fVec,Fs,vis,x,classLabels); %Run spectral event analysis
+[specEvents,TFRs,timeseries] = spectralevents(eventBand,fVec,Fs,vis,x,classLabels); %Run spectral event analysis

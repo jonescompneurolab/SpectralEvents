@@ -43,13 +43,13 @@ for subj_i=1:numSubj
         % number of trials to sample
         if numel(trial_inds)>10
             numSampTrials = 10;
-            if numel(trial_inds)>1
-                avgTFR = mean(TFR(:,:,trial_inds),3);
-            else
-                avgTFR = squeeze(TFR);
-            end
+            avgTFR = mean(TFR(:,:,trial_inds),3);
+        elseif numel(trial_inds)>1
+            numSampTrials = numel(trial_inds);
+            avgTFR = mean(TFR(:,:,trial_inds),3);
         else
             numSampTrials = numel(trial_inds);
+            avgTFR = squeeze(TFR);
         end
         
         % Find sample trials to view
@@ -77,7 +77,7 @@ for subj_i=1:numSubj
         
         % Plot 10 randomly sampled TFR trials
         clims = [0 mean(eventThr(eventBand_inds))*1.3]; %Standardize upper spectrogram scaling limit based on the average event threshold
-        for trl_i=1:10
+        for trl_i=1:numSampTrials
             %pos_2 = [0.09 0.75-(0.065*trl_i) 0.8 0.05];
             subplot('Position',[0.09 0.75-(0.065*trl_i) 0.8 0.05])
             imagesc([tVec(1) tVec(end)],eventBand,TFR(eventBand_inds(1):eventBand_inds(end),:,trial_inds(randTrial_inds(trl_i))),clims)
@@ -126,6 +126,12 @@ for feat_i=1:numel(features)
         end
     end
     
+    % Don't plot if no events occurred
+    if isequal(features{feat_i},'eventnumber') && nnz(feature_agg)==0
+        close 
+        break
+    end
+    
     % Calculate probability of aggregate (accross subjects/sessions) and 
     % standardize bins
     [featProb_agg,bins] = histcounts(feature_agg,'Normalization','probability'); 
@@ -154,13 +160,16 @@ for feat_i=1:numel(features)
         featProb = histcounts(feature,bins,'Normalization','probability');
         featProb(isnan(featProb)) = 0; %Correct for NaN values resulting from dividing by 0 counts
         hold on
-        plot(bins(2:end)-diff(bins)/2,featProb)
+        %plot(bins(2:end)-diff(bins)/2,featProb)
+        histogram('BinEdges',bins,'BinCounts',featProb,'DisplayStyle','stairs')
         hold off
     end
+    % Finally, plot aggregate probability for each feature
     hold on
-    plot(bins(2:end)-diff(bins)/2,featProb_agg,'k-','LineWidth',2)
+    %plot(bins(2:end)-diff(bins)/2,featProb_agg,'k-','LineWidth',2)
+    histogram('BinEdges',bins,'BinCounts',featProb_agg,'EdgeColor','k','LineStyle','-','LineWidth',2,'DisplayStyle','stairs')
     hold off
-    xlim([bins(2)-(bins(2)-bins(1))/2,bins(find(cumsum(featProb_agg)>=0.95,1))]) %Lower limit: smallest mid-bin; upper limit: 95% cdf interval
+    xlim([bins(2)-(bins(2)-bins(1))/2,bins(find(cumsum(featProb_agg)>=0.95,1)+1)]) %Lower limit: smallest mid-bin; upper limit: 95% cdf interval
     xlabel(feature_names{feat_i})
     ylabel('probability')
 end
