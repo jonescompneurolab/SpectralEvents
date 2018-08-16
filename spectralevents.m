@@ -2,7 +2,7 @@ function [specEv_struct, TFRs, X] = spectralevents(eventBand, fVec, Fs, analyze,
 % SPECTRALEVENTS Find and analyze spectral events (local maxima above a 
 %   power threshold) of a specified band in the non-averaged time-frequency
 %   response (TFR) in a dataset.
-
+%
 %   [specEv_struct,TFRs,X] = SPECTRALEVENTS(eventBand,fVec,Fs,analyze,X,classLabels)
 %   or
 %   [specEv_struct,TFRs,X] = SPECTRALEVENTS(eventBand,fVec,Fs,analyze,X{1},classLabels{1},X{2},classLabels{2},...)

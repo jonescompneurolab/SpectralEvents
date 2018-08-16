@@ -53,7 +53,7 @@ for subj_i=1:numSubj
         end
         
         % Find sample trials to view
-        rng('default');
+        rng('shuffle');
         randTrial_inds = randperm(numel(trial_inds),numSampTrials); %Sample trial indices
         
         % Plot average TFR
@@ -68,7 +68,6 @@ for subj_i=1:numSubj
         pos = get(gca,'position');
         colormap jet
         cb = colorbar;
-        %pos([1,3]) = [0.91 0.01];
         set(cb,'position',[0.9 pos(2) 0.01 pos(4)])
         hold on
         line(tVec',repmat(eventBand,length(tVec),1)','Color','k','LineStyle',':')
@@ -78,7 +77,6 @@ for subj_i=1:numSubj
         % Plot 10 randomly sampled TFR trials
         clims = [0 mean(eventThr(eventBand_inds))*1.3]; %Standardize upper spectrogram scaling limit based on the average event threshold
         for trl_i=1:numSampTrials
-            %pos_2 = [0.09 0.75-(0.065*trl_i) 0.8 0.05];
             subplot('Position',[0.09 0.75-(0.065*trl_i) 0.8 0.05])
             imagesc([tVec(1) tVec(end)],eventBand,TFR(eventBand_inds(1):eventBand_inds(end),:,trial_inds(randTrial_inds(trl_i))),clims)
             x_ticks = get(gca,'xtick');
@@ -99,7 +97,6 @@ for subj_i=1:numSubj
             hold off
         end
         cb = colorbar;
-        %pos([1,3]) = [0.91 0.01];
         set(cb,'position',[0.9 pos(2) 0.01 pos(4)])
         set(gca,'xtick',x_ticks)
         set(gca,'xticklabel',x_tick_labels)
