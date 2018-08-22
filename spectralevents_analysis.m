@@ -8,7 +8,8 @@ function spectralevents_analysis(specEv_struct, timeseries, TFRs, tVec, fVec)
 %   specEv_struct - spectralevents structure array.
 %   timeseries - cell array containing time-series trials by 
 %       subject/session.
-%   TFRs - cell array containing time-frequency responses by
+%   TFRs - cell array containing time-frequency responses (normalized 
+%       across all trials; factors of median for each frequency) by
 %       subject/session.
 %   tVec - time vector (s) over which the time-frequency responses are 
 %       shown.
@@ -68,14 +69,16 @@ for subj_i=1:numSubj
         pos = get(gca,'position');
         colormap jet
         cb = colorbar;
-        set(cb,'position',[0.9 pos(2) 0.01 pos(4)])
+        cb.Position = [0.9 pos(2) 0.01 pos(4)];
+        cb.Label.String = 'PSD (FOM)';
         hold on
         line(tVec',repmat(eventBand,length(tVec),1)','Color','k','LineStyle',':')
         hold off
         title(['Dataset ',num2str(subj_i),', Trial class ',num2str(classes(cls_i))])
         
         % Plot 10 randomly sampled TFR trials
-        clims = [0 mean(eventThr(eventBand_inds))*1.3]; %Standardize upper spectrogram scaling limit based on the average event threshold
+        %clims = [0 mean(eventThr(eventBand_inds))*1.3]; %Standardize upper limit of spectrogram scaling based on the average event threshold
+        clims = [0 specEv_struct(subj_i).Events.ThrFOM*1.5]; %Standardize upper limit of spectrogram scaling based on the event threshold
         for trl_i=1:numSampTrials
             subplot('Position',[0.09 0.75-(0.065*trl_i) 0.8 0.05])
             imagesc([tVec(1) tVec(end)],eventBand,TFR(eventBand_inds(1):eventBand_inds(end),:,trial_inds(randTrial_inds(trl_i))),clims)
@@ -97,7 +100,7 @@ for subj_i=1:numSubj
             hold off
         end
         cb = colorbar;
-        set(cb,'position',[0.9 pos(2) 0.01 pos(4)])
+        cb.Position = [0.9 pos(2) 0.01 pos(4)];
         set(gca,'xtick',x_ticks)
         set(gca,'xticklabel',x_tick_labels)
         xlabel('s')

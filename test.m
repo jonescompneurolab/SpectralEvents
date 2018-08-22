@@ -2,7 +2,7 @@
 % toolbox. The datasets referenced below are from sessions used in Shin et 
 % al. eLife 2017 (http://dx.doi.org/10.5061/dryad.pn931).
 
-clear all
+clear all, close all
 
 % Load data sessions/subjects from the same experimental setup so that 
 % spectral event features are differentially characterized only between the 
