@@ -103,7 +103,7 @@ for subj_j=1:numSubj
     end
     TFRs{subj_j} = TFR; %Append TFR for the given subject
 
-    specEv_struct(subj_j) = spectralevents_find(eventBand,thrFOM,tVec,fVec,TFR,classLabels{subj_j}); %Find spectral events
+    specEv_struct(subj_j) = spectralevents_find_1(eventBand,thrFOM,tVec,fVec,TFR,classLabels{subj_j}); %Find spectral events
 end
 
 % Run analysis and generate standard figures
