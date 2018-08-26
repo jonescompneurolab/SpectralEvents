@@ -42,14 +42,13 @@ function [specEv_struct, TFRs, X] = spectralevents(eventBand, fVec, Fs, analyze,
 % Outputs:
 %   specEv_struct - array of event feature structures, each corresponding
 %       with a subject/session, respectively.
-%   TFRs - cell array with each cell containing the TFR (normalized across 
-%       all trials; factors of median for each frequency) for a given
-%       subject/session.
+%   TFRs - cell array with each cell containing the time-frequency response 
+%       (freq-by-time-by-trial) for a given subject/session.
 %   X - cell array with each cell containing the time-series trials for a
 %       given subject/session.
 %
 % Dependencies:
-%   4DToolbox by Ole Jensen, Helsinki University of Technology
+%   4DToolbox by Ole Jensen
 %
 % See also SPECTRALEVENTS_FIND, SPECTRALEVENTS_ANALYSIS.
 
@@ -102,8 +101,7 @@ for subj_j=1:numSubj
         [TFR_trl,tVec,~] = traces2TFR(X{subj_j}(:,trl),fVec,Fs,7); %Transformation calculated using a Morlet wavelet (width=7), see 4DToolbox for function details)
         TFR = cat(3,TFR,TFR_trl); %Concatenate each trial along the 3rd dimension
     end
-    medianpower = median(reshape(TFR, size(TFR,1), size(TFR,2)*size(TFR,3)), 2); %Median power at each frequency across all trials
-    TFRs{subj_j} = TFR./repmat(medianpower,1,size(TFR,2),size(TFR,3)); %Append normalized TFR (FOM) for the given subject
+    TFRs{subj_j} = TFR; %Append TFR for the given subject
 
     specEv_struct(subj_j) = spectralevents_find(eventBand,thrFOM,tVec,fVec,TFR,classLabels{subj_j}); %Find spectral events
 end

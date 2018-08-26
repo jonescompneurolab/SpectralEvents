@@ -42,7 +42,7 @@ classes = unique(classLabels);
 
 % Validate consistency of parameter dimensions
 if flength~=length(fVec) || tlength~=length(tVec) || numTrials~=length(classLabels)
-    error('Mismatch in input parameter dimensions!')
+  error('Mismatch in input parameter dimensions!')
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -61,50 +61,50 @@ Finds_localmax = [];
 
 % Retrieve all local maxima in TFR using imregionalmax
 for ti=1:numTrials
-  [peakF,peakT]=find(imregionalmax(squeeze(TFR(:,:,ti)))); %Indices of max local power
-  peakpower=TFR(find(imregionalmax(squeeze(TFR(:,:,ti))))+(ti-1)*flength*tlength); %Power values at local maxima (vector; compiles across frequencies and time)
+  [peakF,peakT] = find(imregionalmax(squeeze(TFR(:,:,ti)))); %Indices of max local power
+  peakpower = TFR(find(imregionalmax(squeeze(TFR(:,:,ti))))+(ti-1)*flength*tlength); %Power values at local maxima (vector; compiles across frequencies and time)
   
   % Find local maxima lowerbound, upperbound, and full width at half max
   % for both frequency and time
-  Ffwhm=NaN(numel(peakpower),3); %2D matrix for freq-dimension event metrics with columns containing lowerbound, upperbound, and fwhm, respectively
-  Tfwhm=NaN(numel(peakpower),3); %2D matrix for time-dimension event metrics with columns containing lowerbound, upperbound, and fwhm, respectively
+  Ffwhm = NaN(numel(peakpower),3); %2D matrix for freq-dimension event metrics with columns containing lowerbound, upperbound, and fwhm, respectively
+  Tfwhm = NaN(numel(peakpower),3); %2D matrix for time-dimension event metrics with columns containing lowerbound, upperbound, and fwhm, respectively
   for lmi=1:numel(peakpower)
-    lmF_underthr=find(squeeze(TFR(:,peakT(lmi),ti) < peakpower(lmi)/2)); %Indices of TFR frequencies of < half max power at the time of a given local peak
+    lmF_underthr = find(squeeze(TFR(:,peakT(lmi),ti) < peakpower(lmi)/2)); %Indices of TFR frequencies of < half max power at the time of a given local peak
     if ~isempty(find(lmF_underthr < peakF(lmi), 1)) && ~isempty(find(lmF_underthr > peakF(lmi), 1))
-      Ffwhm(lmi,1)=fVec(lmF_underthr(find(lmF_underthr < peakF(lmi),1,'last'))+1);
-      Ffwhm(lmi,2)=fVec(lmF_underthr(find(lmF_underthr > peakF(lmi),1,'first'))-1);
-      Ffwhm(lmi,3)=Ffwhm(lmi,2)-Ffwhm(lmi,1)+ min(diff(fVec));
+      Ffwhm(lmi,1) = fVec(lmF_underthr(find(lmF_underthr < peakF(lmi),1,'last'))+1);
+      Ffwhm(lmi,2) = fVec(lmF_underthr(find(lmF_underthr > peakF(lmi),1,'first'))-1);
+      Ffwhm(lmi,3) = Ffwhm(lmi,2)-Ffwhm(lmi,1)+ min(diff(fVec));
     elseif isempty(find(lmF_underthr < peakF(lmi),1)) && ~isempty(find(lmF_underthr > peakF(lmi),1))
-      Ffwhm(lmi,1)=fVec(1);
-      Ffwhm(lmi,2)=fVec(lmF_underthr(find(lmF_underthr > peakF(lmi),1,'first'))-1);
-      Ffwhm(lmi,3)=2*(Ffwhm(lmi,2)-fVec(peakF(lmi)))+ min(diff(fVec));
+      Ffwhm(lmi,1) = fVec(1);
+      Ffwhm(lmi,2) = fVec(lmF_underthr(find(lmF_underthr > peakF(lmi),1,'first'))-1);
+      Ffwhm(lmi,3) = 2*(Ffwhm(lmi,2)-fVec(peakF(lmi)))+ min(diff(fVec));
     elseif ~isempty(find(lmF_underthr < peakF(lmi),1)) && isempty(find(lmF_underthr > peakF(lmi),1))
-      Ffwhm(lmi,1)=fVec(lmF_underthr(find(lmF_underthr < peakF(lmi),1,'last'))+1);
-      Ffwhm(lmi,2)=fVec(end);
-      Ffwhm(lmi,3)=2*(fVec(peakF(lmi))-Ffwhm(lmi,1))+ min(diff(fVec));
+      Ffwhm(lmi,1) = fVec(lmF_underthr(find(lmF_underthr < peakF(lmi),1,'last'))+1);
+      Ffwhm(lmi,2) = fVec(end);
+      Ffwhm(lmi,3) = 2*(fVec(peakF(lmi))-Ffwhm(lmi,1))+ min(diff(fVec));
     else
-      Ffwhm(lmi,1)=fVec(1);
-      Ffwhm(lmi,2)=fVec(end);
-      Ffwhm(lmi,3)=2*(fVec(end)-fVec(1)+min(diff(fVec)));
+      Ffwhm(lmi,1) = fVec(1);
+      Ffwhm(lmi,2) = fVec(end);
+      Ffwhm(lmi,3) = 2*(fVec(end)-fVec(1)+min(diff(fVec)));
     end
     
-    lmT_underthr=find(squeeze(TFR(peakF(lmi),:,ti) < peakpower(lmi)/2)); %Indices of TFR times of < half max power at the freq of a given local peak
+    lmT_underthr = find(squeeze(TFR(peakF(lmi),:,ti) < peakpower(lmi)/2)); %Indices of TFR times of < half max power at the freq of a given local peak
     if ~isempty(find(lmT_underthr < peakT(lmi), 1)) && ~isempty(find(lmT_underthr > peakT(lmi), 1))
-      Tfwhm(lmi,1)=tVec(lmT_underthr(find(lmT_underthr < peakT(lmi),1,'last'))+1);
-      Tfwhm(lmi,2)=tVec(lmT_underthr(find(lmT_underthr > peakT(lmi),1,'first'))-1);
-      Tfwhm(lmi,3)=Tfwhm(lmi,2)-Tfwhm(lmi,1)+ min(diff(tVec));
+      Tfwhm(lmi,1) = tVec(lmT_underthr(find(lmT_underthr < peakT(lmi),1,'last'))+1);
+      Tfwhm(lmi,2) = tVec(lmT_underthr(find(lmT_underthr > peakT(lmi),1,'first'))-1);
+      Tfwhm(lmi,3) = Tfwhm(lmi,2)-Tfwhm(lmi,1)+ min(diff(tVec));
     elseif isempty(find(lmT_underthr < peakT(lmi),1)) && ~isempty(find(lmT_underthr > peakT(lmi),1))
-      Tfwhm(lmi,1)=tVec(1);
-      Tfwhm(lmi,2)=tVec(lmT_underthr(find(lmT_underthr > peakT(lmi),1,'first'))-1);
-      Tfwhm(lmi,3)=2*(Tfwhm(lmi,2)-tVec(peakT(lmi)))+ min(diff(tVec));
+      Tfwhm(lmi,1) = tVec(1);
+      Tfwhm(lmi,2) = tVec(lmT_underthr(find(lmT_underthr > peakT(lmi),1,'first'))-1);
+      Tfwhm(lmi,3) = 2*(Tfwhm(lmi,2)-tVec(peakT(lmi)))+ min(diff(tVec));
     elseif ~isempty(find(lmT_underthr < peakT(lmi),1)) && isempty(find(lmT_underthr > peakT(lmi),1))
-      Tfwhm(lmi,1)=tVec(lmT_underthr(find(lmT_underthr < peakT(lmi),1,'last'))+1);
-      Tfwhm(lmi,2)=tVec(end);
-      Tfwhm(lmi,3)=2*(tVec(peakT(lmi))-Tfwhm(lmi,1))+ min(diff(tVec));
+      Tfwhm(lmi,1) = tVec(lmT_underthr(find(lmT_underthr < peakT(lmi),1,'last'))+1);
+      Tfwhm(lmi,2) = tVec(end);
+      Tfwhm(lmi,3) = 2*(tVec(peakT(lmi))-Tfwhm(lmi,1))+ min(diff(tVec));
     else
-      Tfwhm(lmi,1)=tVec(1);
-      Tfwhm(lmi,2)=tVec(end);
-      Tfwhm(lmi,3)=2*(tVec(end)-tVec(1)+min(diff(tVec)));
+      Tfwhm(lmi,1) = tVec(1);
+      Tfwhm(lmi,2) = tVec(end);
+      Tfwhm(lmi,3) = 2*(tVec(end)-tVec(1)+min(diff(tVec)));
     end
   end
   
