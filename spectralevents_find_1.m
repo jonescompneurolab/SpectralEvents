@@ -1,12 +1,12 @@
-function specEv_struct = spectralevents_find(eventBand, thrFOM, tVec, fVec, TFR, classLabels)
-% SPECTRALEVENTS_FIND Algorithm for finding and calculating spectral events
+function specEv_struct = spectralevents_find_1(eventBand, thrFOM, tVec, fVec, TFR, classLabels)
+% SPECTRALEVENTS_FIND_1 Algorithm for finding and calculating spectral events
 %   on a trial-by-trial basis of of a single subject/session. Uses the 
 %   following method:
 %   1) Retrieve all local maxima in TFR using imregionalmax
 %   2) Pick out maxima above threshold and within the frequency band (eventBand) of interest
 %   3) Identify and organize event features
 %
-% specEv_struct = spectralevents_find(eventBand,thrFOM,tVec,fVec,TFR,classLabels)
+% specEv_struct = spectralevents_find_1(eventBand,thrFOM,tVec,fVec,TFR,classLabels)
 % 
 % Inputs:
 %   eventBand - range of frequencies ([Fmin_event Fmax_event]; Hz) over 
@@ -31,7 +31,7 @@ function specEv_struct = spectralevents_find(eventBand, thrFOM, tVec, fVec, TFR,
 %   characteristics), and IEI (inter-event intervals from all trials and 
 %   those associated with only a given class label).
 %
-% See also SPECTRALEVENTS, SPECTRALEVENTS_ANALYSIS.
+% See also SPECTRALEVENTS, SPECTRALEVENTS_FIND_2, SPECTRALEVENTS_ANALYSIS.
 
 % Initialize general data parameters
 eventBand_inds = fVec(fVec>=eventBand(1) & fVec<=eventBand(2)); %Indices of freq vector within eventBand
@@ -141,11 +141,10 @@ end
 
 trialSummary.classLabels = classLabels';
 
-% Normalize based on frequency-specific median
-trialSummary.meanpower = mean(squeeze(mean(TFR(eventBand_inds,:,:),2)) ./ repmat(medianpower(eventBand_inds),1,numTrials), 1)';
+trialSummary.meanpower = mean(squeeze(mean(TFR(eventBand_inds,:,:),2)) ./ repmat(medianpower(eventBand_inds),1,numTrials), 1)'; %Mean trial power normalized to frequency-specific median
 
 suprathrTFR = TFR>=repmat(thr,1,tlength,numTrials);
-trialSummary.coverage = squeeze(sum(sum(suprathrTFR(eventBand_inds,:,:),1),2)) *100 / (numel(eventBand_inds)*tlength); % calculated in percentage
+trialSummary.coverage = squeeze(sum(sum(suprathrTFR(eventBand_inds,:,:),1),2)) *100 / (numel(eventBand_inds)*tlength); %Calculated in percentage
 
 % Initialize column vectors
 trialSummary.eventnumber = nan(numTrials,1);
