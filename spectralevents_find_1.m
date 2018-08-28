@@ -1,9 +1,11 @@
 function specEv_struct = spectralevents_find_1(eventBand, thrFOM, tVec, fVec, TFR, classLabels)
-% SPECTRALEVENTS_FIND_1 Algorithm for finding and calculating spectral events
-%   on a trial-by-trial basis of of a single subject/session. Uses the 
-%   following method:
+% SPECTRALEVENTS_FIND_1 Algorithm for finding and calculating spectral 
+%   events on a trial-by-trial basis of of a single subject/session. Uses 
+%   the following method (used as the primary event detection method in 
+%   Shin et al. eLife 2017):
 %   1) Retrieve all local maxima in TFR using imregionalmax
-%   2) Pick out maxima above threshold and within the frequency band (eventBand) of interest
+%   2) Pick out maxima above threshold and within the frequency band of 
+%      interest
 %   3) Identify and organize event features
 %
 % specEv_struct = spectralevents_find_1(eventBand,thrFOM,tVec,fVec,TFR,classLabels)
@@ -31,7 +33,7 @@ function specEv_struct = spectralevents_find_1(eventBand, thrFOM, tVec, fVec, TF
 %   characteristics), and IEI (inter-event intervals from all trials and 
 %   those associated with only a given class label).
 %
-% See also SPECTRALEVENTS, SPECTRALEVENTS_FIND_2, SPECTRALEVENTS_ANALYSIS.
+% See also SPECTRALEVENTS, SPECTRALEVENTS_FIND_2, SPECTRALEVENTS_VIS.
 
 % Initialize general data parameters
 eventBand_inds = fVec(fVec>=eventBand(1) & fVec<=eventBand(2)); %Indices of freq vector within eventBand

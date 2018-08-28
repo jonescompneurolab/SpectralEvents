@@ -50,7 +50,7 @@ function [specEv_struct, TFRs, X] = spectralevents(eventBand, fVec, Fs, analyze,
 % Dependencies:
 %   4DToolbox by Ole Jensen
 %
-% See also SPECTRALEVENTS_FIND, SPECTRALEVENTS_ANALYSIS.
+% See also SPECTRALEVENTS_FIND_1,SPECTRALEVENTS_FIND_2, SPECTRALEVENTS_VIS.
 
 % Validate number of time-series (X{1}, X{2},...) and trial class label (classLabels{1}, classLabels{2},...) inputs
 if nargin-4>=2
@@ -108,6 +108,6 @@ end
 
 % Run analysis and generate standard figures
 if analyze==true
-    spectralevents_analysis(specEv_struct,X,TFRs,tVec,fVec);
+    spectralevents_vis(specEv_struct,X,TFRs,tVec,fVec);
 end
 end

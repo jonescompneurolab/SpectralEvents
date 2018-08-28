@@ -1,8 +1,9 @@
-function spectralevents_analysis(specEv_struct, timeseries, TFRs, tVec, fVec)
-% SPECTRALEVENTS_ANALYSIS Conduct basic analysis for the purpose of visualizing dataset spectral event 
-%   features and generates spectrogram and probability histogram plots.
+function spectralevents_vis(specEv_struct, timeseries, TFRs, tVec, fVec)
+% SPECTRALEVENTS_VIS Conduct basic analysis for the purpose of 
+%   visualizing dataset spectral event features and generates spectrogram 
+%   and probability histogram plots.
 %
-% spectralevents_analysis(specEv_struct,timeseries,TFRs,tVec,fVec)
+% spectralevents_VIS(specEv_struct,timeseries,TFRs,tVec,fVec)
 %
 % Inputs:
 %   specEv_struct - spectralevents structure array.
