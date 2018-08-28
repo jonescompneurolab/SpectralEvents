@@ -1,6 +1,6 @@
 # SpectralEvents Toolbox
 
-Find and analyze spectral events (local maxima above a power threshold within a specified band of the non-averaged time-frequency response) in each trial of a dataset.
+This toolbox is composed of a series of functions that find and analyze spectral events (local maxima above a power threshold within a specified band of the non-averaged time-frequency response) on a trial-by-trial basis allowing for spectral event feature comparison between trial outcomes/conditions.
 
 ## Functions
 ### spectralevents
@@ -11,7 +11,7 @@ or
 ```
 [specEv_struct,TFRs,X] = spectralevents(eventBand,analyze,fVec,Fs,X{1},classLabels{1},X{2},classLabels{2},...)
 ```
-Imports dataset, calls `spectralevents_find` for each subject/session within the dataset, and runs `spectralevents_analysis` in order to capture and view spectral event features.
+Imports dataset, calls `spectralevents_find_1` for each subject/session within the dataset, and runs `spectralevents_vis` in order to capture and view spectral event features.
 
 Returns a structure array of spectral event features (specEv_struct), cell array containing the time-frequency responses (TFRs), and cell array of all time-series trials (X) for each subject/session within the dataset comparing various experimental conditions or outcome states corresponding to each trial. By default, this function sets the factors of median threshold at 6.
 
@@ -28,13 +28,13 @@ Outputs:
 * `TFRs` - cell array with each cell containing the TFR for a given subject/session.
 * `X` - cell array with each cell containing the time-series trials for a given subject/session.
 
-### spectralevents_find
+### spectralevents_find_1
 ```
-specEv_struct = spectralevents_find(eventBand,thrFOM,tVec,fVec,TFR,classLabels)
+specEv_struct = spectralevents_find_1(eventBand,thrFOM,tVec,fVec,TFR,classLabels)
 ```
-Algorithm for finding and calculating spectral events on a trial-by-trial basis of of a single subject/session. Uses the following method:
+Algorithm for finding and calculating spectral events on a trial-by-trial basis of of a single subject/session. As the primary event detection method in Shin et al. eLife 2017, events are found as follows:
 1. Retrieve all local maxima in TFR using imregionalmax
-2. Pick out maxima above threshold and within the frequency band (eventBand) of interest
+2. Pick out maxima above threshold and within the frequency band of interest
 3. Identify and organize event features
 
 Inputs:
@@ -48,9 +48,9 @@ Inputs:
 Outputs:
 * `specEv_struct` - event feature structure with three main sub-structures: TrialSummary (trial-level features), Events (individual event characteristics), and IEI (inter-event intervals from all trials and those associated with only a given class label).
 
-### spectralevents_analysis (script)
+### spectralevents_vis (script)
 ```
-spectralevents_analysis(specEv_struct,timeseries,TFRs, tVec,fVec)
+spectralevents_vis(specEv_struct,timeseries,TFRs, tVec,fVec)
 ```
 Conducts basic analysis for the purpose of visualizing dataset spectral event features and generates spectrogram and probability histogram plots.
 
@@ -65,7 +65,7 @@ Inputs:
 See test script `test.m`.
 
 ## Dependencies
-* 4DToolbox by Ole Jensen, Helsinki University of Technology
+* 4DToolbox by Ole Jensen
 
 ## Contributors:
 * Hyeyoung Shin, Department of Neuroscience, Brown University, shinehyeyoung@gmail.com
