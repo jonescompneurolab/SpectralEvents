@@ -1,8 +1,8 @@
 function specEv_struct = spectralevents_find_1(eventBand, thrFOM, tVec, fVec, TFR, classLabels)
 % SPECTRALEVENTS_FIND_1 Algorithm for finding and calculating spectral 
-%   events on a trial-by-trial basis of of a single subject/session. Uses 
-%   the following method (used as the primary event detection method in 
-%   Shin et al. eLife 2017):
+%   events on a trial-by-trial basis of of a single subject/session. As the
+%   primary event detection method in Shin et al. eLife 2017, events are 
+%   found as follows:
 %   1) Retrieve all local maxima in TFR using imregionalmax
 %   2) Pick out maxima above threshold and within the frequency band of 
 %      interest
@@ -120,9 +120,9 @@ end
 medianpower = median(reshape(TFR, size(TFR,1), size(TFR,2)*size(TFR,3)), 2); %Median power at each frequency across all trials
 TFRlocalmax = [TFRlocalmax TFRlocalmax(:,11)./medianpower(Finds_localmax)]; %Append column with peak power normalized to median power
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% (2) Pick out maxima above threshold and within the frequency band (eventBand) of interest
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% (2) Pick out maxima above threshold and within the frequency band of interest
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 thr = thrFOM*medianpower; %Spectral event threshold for each frequency value
 spectralEvents = TFRlocalmax((TFRlocalmax(:,3)>=eventBand(1) & TFRlocalmax(:,3)<=eventBand(2) & TFRlocalmax(:,11)>=thr(Finds_localmax)),:); %Select local maxima
