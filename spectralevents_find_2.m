@@ -1,13 +1,13 @@
 function specEv_struct = spectralevents_find_2(eventBand, thrFOM, tVec, fVec, TFR, classLabels)
-% SPECTRALEVENTS_FIND_2 Algorithm for finding and calculating spectral events
-%   on a trial-by-trial basis of of a single subject/session. Uses the 
-%   following method:
+% SPECTRALEVENTS_FIND_2 Algorithm for finding and calculating spectral 
+%   events on a trial-by-trial basis of of a single subject/session. Uses 
+%   the following method:
 %   1) Retrieve all suprathreshold local maxima in TFR using imregionalmax
 %   2) Discard those of lesser magnitude in each suprathreshold region,
 %      respectively, s.t. only the greatest local maximum in each region
 %      survives (when more than one local maxima in a region have the same 
 %      greatest value, their respective event timing, freq. location, and 
-%      boundaries at full-width half-max are calculated separetly and 
+%      boundaries at full-width half-max are calculated separately and 
 %      averaged)
 %   3) Of the remaining maxima, pick out maxima within the frequency band 
 %      of interest
@@ -34,9 +34,9 @@ function specEv_struct = spectralevents_find_2(eventBand, thrFOM, tVec, fVec, TF
 %
 % Outputs:
 %   specEv_struct - event feature structure with three main sub-structures:
-%   TrialSummary (trial-level features), Events (individual event 
-%   characteristics), and IEI (inter-event intervals from all trials and 
-%   those associated with only a given class label).
+%       TrialSummary (trial-level features), Events (individual event 
+%       characteristics), and IEI (inter-event intervals from all trials 
+%       and those associated with only a given class label).
 %
 % See also SPECTRALEVENTS, SPECTRALEVENTS_FIND_1, SPECTRALEVENTS_VIS.
 

@@ -29,9 +29,9 @@ function specEv_struct = spectralevents_find_1(eventBand, thrFOM, tVec, fVec, TF
 %
 % Outputs:
 %   specEv_struct - event feature structure with three main sub-structures:
-%   TrialSummary (trial-level features), Events (individual event 
-%   characteristics), and IEI (inter-event intervals from all trials and 
-%   those associated with only a given class label).
+%       TrialSummary (trial-level features), Events (individual event 
+%       characteristics), and IEI (inter-event intervals from all trials 
+%       and those associated with only a given class label).
 %
 % See also SPECTRALEVENTS, SPECTRALEVENTS_FIND_2, SPECTRALEVENTS_VIS.
 
