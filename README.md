@@ -55,7 +55,7 @@ Outputs:
 specEv_struct = spectralevents_find_2(eventBand,thrFOM,tVec,fVec,TFR,classLabels)
 ```
 Algorithm for finding and calculating spectral events on a trial-by-trial basis of of a single subject/session. Uses the following method:
-1. Retrieve all suprathreshold local maxima in TFR using imregionalmax
+1. Retrieve all suprathreshold local maxima in normalized TFR using imregionalmax
 2. Discard those of lesser magnitude in each suprathreshold region, respectively, s.t. only the greatest local maximum in each region survives (when more than one local maxima in a region have the same greatest value, their respective event timing, freq. location, and boundaries at full-width half-max are calculated separately and averaged)
 3. Of the remaining maxima, pick out maxima within the frequency band of interest
 4. Identify and organize event features

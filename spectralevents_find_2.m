@@ -2,7 +2,8 @@ function specEv_struct = spectralevents_find_2(eventBand, thrFOM, tVec, fVec, TF
 % SPECTRALEVENTS_FIND_2 Algorithm for finding and calculating spectral 
 %   events on a trial-by-trial basis of of a single subject/session. Uses 
 %   the following method:
-%   1) Retrieve all suprathreshold local maxima in TFR using imregionalmax
+%   1) Retrieve all suprathreshold local maxima in normalized TFR using 
+%      imregionalmax
 %   2) Discard those of lesser magnitude in each suprathreshold region,
 %      respectively, s.t. only the greatest local maximum in each region
 %      survives (when more than one local maxima in a region have the same 
@@ -53,11 +54,11 @@ if flength~=length(fVec) || tlength~=length(tVec) || numTrials~=length(classLabe
 end
 
     
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% (1) and (2) Retrieve local maxima in TFR using imregionalmax, discard 
-% those of lesser magnitude in each suprathreshold region, respectively, 
-% and characterize event boundaries (at half max)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% (1) and (2) Retrieve local maxima in normalized TFR using imregionalmax, 
+% discard those of lesser (un-normalized) magnitude in each suprathreshold 
+% region, respectively, and characterize event boundaries (at half max)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % TFRlocalmax: 12 column matrix for storing local max event metrics: trial 
 % index, hit/miss, maxima frequency, lowerbound frequency, upperbound 
@@ -69,7 +70,6 @@ medianpower = median(reshape(TFR, size(TFR,1), size(TFR,2)*size(TFR,3)), 2); %Me
 thr = thrFOM*medianpower; %Spectral event threshold for each frequency value
 
 for ti=1:numTrials
-    
     TFR_ST = squeeze(TFR(:,:,ti))./medianpower; %Suprathreshold TFR: first isolate 2D TFR matrix and normalize
     TFR_ST(TFR_ST<thrFOM) = 0; %Set infrathreshold values to zero
     
@@ -84,22 +84,23 @@ for ti=1:numTrials
     end
         
     % Find max peak in each respective suprathreshold region
-    evPeakF = {};
-    evPeakT = {};
-    evPeakpower = [];
     [~,regions,numReg,~] = bwboundaries(TFR_ST>=thrFOM); %Separate suprathreshold regions
+    evPeakF = cell(1,numReg);
+    evPeakT = cell(1,numReg);
+    evPeakpower = nan(numReg,1);
     for reg_i=1:numReg
         region = zeros(size(TFR_ST)); %Initialize a blank image that will contain a single region
         region(regions==reg_i) = 1; %Set elements (pixels) in region to the value 1
         TFR_reg = TFR_LM.*region; %Regional local maxima
         [peakF_reg,peakT_reg] = find(TFR_reg); %Indices of regional local maxima
         peakpower_reg = TFR(find(TFR_reg)+(ti-1)*flength*tlength); %Power values at regional local maxima
-        [maxPeakpower,maxPeak_inds] = max(peakpower_reg);
+        maxPeakpower = max(peakpower_reg);
+        maxPeak_inds = find(peakpower_reg==maxPeakpower); %Indices of all instances where local maxima have the max peak power
         evPeakF{reg_i} = peakF_reg(maxPeak_inds); %Select TFR indices at max regional peak
         evPeakT{reg_i} = peakT_reg(maxPeak_inds); %Select TFR indices at max regional peak
         evPeakpower(reg_i) = maxPeakpower(1);
     end
-    evPeakpower = evPeakpower';
+    %evPeakpower = evPeakpower';
     
     % Find local maxima lowerbound, upperbound, and full width at half max
     % for both frequency and time
