@@ -1,11 +1,11 @@
-function [specEv_struct, TFRs, X] = spectralevents(eventBand, fVec, Fs, analyze, varargin)
+function [specEv_struct, TFRs, X] = spectralevents(eventBand, fVec, Fs, findMethod, vis, varargin)
 % SPECTRALEVENTS Find and analyze spectral events (local maxima above a 
 %   power threshold) of a specified band in the non-averaged time-frequency
-%   response (TFR) in a dataset.
+%   responses (TFR) of a time-series dataset.
 %
-%   [specEv_struct,TFRs,X] = SPECTRALEVENTS(eventBand,fVec,Fs,analyze,X,classLabels)
+%   [specEv_struct,TFRs,X] = SPECTRALEVENTS(eventBand,fVec,Fs,findMethod,vis,X,classLabels)
 %   or
-%   [specEv_struct,TFRs,X] = SPECTRALEVENTS(eventBand,fVec,Fs,analyze,X{1},classLabels{1},X{2},classLabels{2},...)
+%   [specEv_struct,TFRs,X] = SPECTRALEVENTS(eventBand,fVec,Fs,findMethod,vis,X{1},classLabels{1},X{2},classLabels{2},...)
 %   
 %   Returns a structure array of spectral event features (specEv_struct),
 %   cell array containing the time-frequency responses (TFRs), and cell 
@@ -23,7 +23,11 @@ function [specEv_struct, TFRs, X] = spectralevents(eventBand, fVec, Fs, analyze,
 %       of resolvable/alias-free frequency values (i.e. Fmin>=1/(trial duration), 
 %       Fmax<=(Nyquist freq)).
 %   Fs - sampling frequency (Hz).
-%   analyze - logical value that determines whether to run basic feature 
+%   findMethod - integer value specifying which event-finding method 
+%       function (i.e., spectralevents_find_1 or spectralevents_find_2) to 
+%       run. Note that the method specifies how much overlap exists between
+%       events.
+%   vis - logical value that determines whether to run basic feature 
 %       analysis and output standard figures.
 %   X{a} - m-by-n matrix (of the a^th subject/session cell in cell array X) 
 %       representing the time-series trials of the given subject. m is the number
@@ -53,7 +57,7 @@ function [specEv_struct, TFRs, X] = spectralevents(eventBand, fVec, Fs, analyze,
 % See also SPECTRALEVENTS_FIND_1,SPECTRALEVENTS_FIND_2, SPECTRALEVENTS_VIS.
 
 % Validate number of time-series (X{1}, X{2},...) and trial class label (classLabels{1}, classLabels{2},...) inputs
-if nargin-4>=2
+if nargin-5>=2
     X = varargin((1:2:numel(varargin))); %Cell array containing time-series trials by subject/session
     classLabels = varargin((2:2:numel(varargin))); %Cell array containing trial classification cells by subject/session
     if numel(varargin)==2 && iscell(X{1})
@@ -103,11 +107,16 @@ for subj_j=1:numSubj
     end
     TFRs{subj_j} = TFR; %Append TFR for the given subject
 
-    specEv_struct(subj_j) = spectralevents_find_1(eventBand,thrFOM,tVec,fVec,TFR,classLabels{subj_j}); %Find spectral events
+    switch findMethod
+        case 1
+            specEv_struct(subj_j) = spectralevents_find_1(eventBand,thrFOM,tVec,fVec,TFR,classLabels{subj_j}); %Find spectral events allowing for overlap
+        case 2
+            specEv_struct(subj_j) = spectralevents_find_2(eventBand,thrFOM,tVec,fVec,TFR,classLabels{subj_j}); %Find spectral events not allowing for overlap
+    end
 end
 
 % Run analysis and generate standard figures
-if analyze==true
+if vis==true
     spectralevents_vis(specEv_struct,X,TFRs,tVec,fVec);
 end
 end
