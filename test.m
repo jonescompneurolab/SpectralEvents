@@ -22,7 +22,7 @@ end
 eventBand = [15,29]; %Frequency range of spectral events
 fVec = (1:60); %Vector of fequency values over which to calculate TFR
 Fs = 600; %Sampling rate of time-series
-findMethod = 2; %Event-finding method (1 allows for maximal overlap while 2 limits overlap in each respective suprathreshold region)
+findMethod = 1; %Event-finding method (1 allows for maximal overlap while 2 limits overlap in each respective suprathreshold region)
 vis = true; %Generate standard visualization plots for event features across all subjects/sessions
 %tVec = (1/Fs:1/Fs:1);
 [specEvents,TFRs,timeseries] = spectralevents(eventBand,fVec,Fs,findMethod,vis,x,classLabels); %Run spectral event analysis

@@ -100,7 +100,6 @@ for ti=1:numTrials
         evPeakT{reg_i} = peakT_reg(maxPeak_inds); %Select TFR indices at max regional peak
         evPeakpower(reg_i) = maxPeakpower(1);
     end
-    %evPeakpower = evPeakpower';
     
     % Find local maxima lowerbound, upperbound, and full width at half max
     % for both frequency and time
