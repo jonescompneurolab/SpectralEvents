@@ -106,15 +106,8 @@ for subj_j=1:numSubj
         TFR = cat(3,TFR,TFR_trl); %Concatenate each trial along the 3rd dimension
     end
     TFRs{subj_j} = TFR; %Append TFR for the given subject
-
-    switch findMethod
-        case 1
-            specEv_struct(subj_j) = spectralevents_find_1(eventBand,thrFOM,tVec,fVec,TFR,classLabels{subj_j}); %Find spectral events allowing for overlap
-        case 2
-            specEv_struct(subj_j) = spectralevents_find_2(eventBand,thrFOM,tVec,fVec,TFR,classLabels{subj_j}); %Find spectral events not allowing for overlap
-        case 3
-            specEv_struct(subj_j) = spectralevents_find_3(eventBand,thrFOM,tVec,fVec,TFR,classLabels{subj_j}); %Find spectral events by calculating local maxima only in frequency band of interest and not allowing for overlap
-    end
+    
+    specEv_struct(subj_j) = spectralevents_find(findMethod,eventBand,thrFOM,tVec,fVec,TFR,classLabels{subj_j}); %Find spectral events
 end
 
 % Run analysis and generate standard figures
