@@ -59,7 +59,7 @@ function specEv_struct = spectralevents_find(findMethod,eventBand, thrFOM, tVec,
 %       characteristics), and IEI (inter-event intervals from all trials 
 %       and those associated with only a given class label).
 %
-% See also SPECTRALEVENTS, SPECTRALEVENTS_FIND, SPECTRALEVENTS_VIS, SPECTRALEVENTS_TFR.
+% See also SPECTRALEVENTS, SPECTRALEVENTS_FIND, SPECTRALEVENTS_TS2TFR, SPECTRALEVENTS_VIS.
 
 %   -----------------------------------------------------------------------
 %   SpectralEvents::spectralevents_find

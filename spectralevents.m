@@ -52,7 +52,7 @@ function [specEv_struct, TFRs, X] = spectralevents(eventBand, fVec, Fs, findMeth
 %   X - cell array with each cell containing the time-series trials for a
 %       given subject/session.
 %
-% See also SPECTRALEVENTS_FIND, SPECTRALEVENTS_VIS, SPECTRALEVENTS_TFR.
+% See also SPECTRALEVENTS_FIND, SPECTRALEVENTS_TS2TFR, SPECTRALEVENTS_VIS.
 
 %   -----------------------------------------------------------------------
 %   SpectralEvents::spectralevents

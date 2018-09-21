@@ -16,7 +16,7 @@ function spectralevents_vis(specEv_struct, timeseries, TFRs, tVec, fVec)
 %   fVec - frequency vector (Hz) over which the time-frequency responses
 %       are shown.
 %
-% See also SPECTRALEVENTS, SPECTRALEVENTS_FIND, SPECTRALEVENTS_TFR.
+% See also SPECTRALEVENTS, SPECTRALEVENTS_FIND, SPECTRALEVENTS_TS2TFR.
 
 %   -----------------------------------------------------------------------
 %   SpectralEvents::spectralevents_vis
