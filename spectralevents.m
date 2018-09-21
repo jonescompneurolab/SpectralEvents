@@ -1,7 +1,8 @@
 function [specEv_struct, TFRs, X] = spectralevents(eventBand, fVec, Fs, findMethod, vis, varargin)
-% SPECTRALEVENTS Find and analyze spectral events (local maxima above a 
-%   power threshold) of a specified band in the non-averaged time-frequency
-%   responses (TFR) of a time-series dataset.
+% SPECTRALEVENTS Find and analyze transient spectral events in a 
+%   time-series dataset. Spectral events are defined as local maxima above a 
+%   power threshold of a specified band in the non-averaged time-frequency
+%   responses (TFR).
 %
 %   [specEv_struct,TFRs,X] = SPECTRALEVENTS(eventBand,fVec,Fs,findMethod,vis,X,classLabels)
 %   or
@@ -51,10 +52,27 @@ function [specEv_struct, TFRs, X] = spectralevents(eventBand, fVec, Fs, findMeth
 %   X - cell array with each cell containing the time-series trials for a
 %       given subject/session.
 %
-% Dependencies:
-%   4DToolbox by Ole Jensen
+% See also SPECTRALEVENTS_FIND, SPECTRALEVENTS_VIS, SPECTRALEVENTS_TFR.
+
+%   -----------------------------------------------------------------------
+%   SpectralEvents::spectralevents
+%   Copyright (C) 2018  Ryan Thorpe
 %
-% See also SPECTRALEVENTS_FIND_1,SPECTRALEVENTS_FIND_2, SPECTRALEVENTS_VIS.
+%   This file is part of the SpectralEvents toolbox.
+% 
+%   SpectralEvents is free software: you can redistribute it and/or modify
+%   it under the terms of the GNU General Public License as published by
+%   the Free Software Foundation, either version 3 of the License, or
+%   (at your option) any later version.
+% 
+%   SpectralEvents is distributed in the hope that it will be useful,
+%   but WITHOUT ANY WARRANTY; without even the implied warranty of
+%   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%   GNU General Public License for more details.
+% 
+%   You should have received a copy of the GNU General Public License
+%   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+%   -----------------------------------------------------------------------
 
 % Validate number of time-series (X{1}, X{2},...) and trial class label (classLabels{1}, classLabels{2},...) inputs
 if nargin-5>=2
@@ -102,7 +120,7 @@ TFRs = {}; %Cell-array for storing the TFRs across subjects
 for subj_j=1:numSubj
     TFR = []; %Matrix for storing freq-by-time-by-trial
     for trl=1:size(X{subj_j},2)
-        [TFR_trl,tVec,~] = traces2TFR(X{subj_j}(:,trl),fVec,Fs,7); %Transformation calculated using a Morlet wavelet (width=7), see 4DToolbox for function details)
+        [TFR_trl,tVec,~] = spectralevents_tfr(X{subj_j}(:,trl),fVec,Fs,7); %Transformation calculated using a Morlet wavelet (width=7), see 4DToolbox for function details)
         TFR = cat(3,TFR,TFR_trl); %Concatenate each trial along the 3rd dimension
     end
     TFRs{subj_j} = TFR; %Append TFR for the given subject

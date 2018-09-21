@@ -1,6 +1,27 @@
-% This test script implements the main pipeline of the spectralevents 
-% toolbox. The datasets referenced below are from sessions used in Shin et 
-% al. eLife 2017 (http://dx.doi.org/10.5061/dryad.pn931).
+% This script tests and demonstrates implementation of the main pipeline of
+% the spectralevents toolbox. The datasets referenced below are from 
+% sessions used in Shin et al. eLife 2017 
+% (http://dx.doi.org/10.5061/dryad.pn931).
+
+%   -----------------------------------------------------------------------
+%   SpectralEvents::test
+%   Copyright (C) 2018  Ryan Thorpe
+%
+%   This file is part of the SpectralEvents toolbox.
+% 
+%   SpectralEvents is free software: you can redistribute it and/or modify
+%   it under the terms of the GNU General Public License as published by
+%   the Free Software Foundation, either version 3 of the License, or
+%   (at your option) any later version.
+% 
+%   SpectralEvents is distributed in the hope that it will be useful,
+%   but WITHOUT ANY WARRANTY; without even the implied warranty of
+%   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%   GNU General Public License for more details.
+% 
+%   You should have received a copy of the GNU General Public License
+%   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+%   -----------------------------------------------------------------------
 
 clear all, close all
 
