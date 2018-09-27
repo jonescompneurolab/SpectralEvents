@@ -24,8 +24,7 @@ function [specEv_struct, TFRs, X] = spectralevents(eventBand, fVec, Fs, findMeth
 %       of resolvable/alias-free frequency values (i.e. Fmin>=1/(trial duration), 
 %       Fmax<=(Nyquist freq)).
 %   Fs - sampling frequency (Hz).
-%   findMethod - integer value specifying which event-finding method 
-%       function (i.e., spectralevents_find_1 or spectralevents_find_2) to 
+%   findMethod - integer value specifying which event-finding method to 
 %       run. Note that the method specifies how much overlap exists between
 %       events.
 %   vis - logical value that determines whether to run basic feature 

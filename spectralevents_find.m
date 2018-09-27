@@ -1,24 +1,27 @@
-function specEv_struct = spectralevents_find(findMethod,eventBand, thrFOM, tVec, fVec, TFR, classLabels)
+function specEv_struct = spectralevents_find(findMethod, eventBand, thrFOM, tVec, fVec, TFR, classLabels)
 % SPECTRALEVENTS_FIND Algorithm for finding and calculating spectral 
 %   events on a trial-by-trial basis of of a single subject/session. Uses 
-%   one of three methods before identifying and organizing event features:
+%   one of three methods before further analyzing and organizing event 
+%   features:
 %
 %   1) (Primary event detection method in Shin et al. eLife 2017): Find 
 %      spectral events by first retrieving all local maxima in 
 %      un-normalized TFR using imregionalmax, then selecting suprathreshold
 %      peaks within the frequency band of interest. This method allows for 
 %      multiple, overlapping events to occur in a given suprathreshold 
-%      region and does not guarantee at least one spectral event per trial.
+%      region and does not guarantee the presence of within-band, 
+%      suprathreshold activity in any given trial will render an event.
 %   2) Find spectral events by first thresholding
 %      entire normalize TFR (over all frequencies), then finding local 
-%      maxima. Discard those of lesser magnitude in each suprathreshold region,
-%      respectively, s.t. only the greatest local maximum in each region
-%      survives (when more than one local maxima in a region have the same 
-%      greatest value, their respective event timing, freq. location, and 
-%      boundaries at full-width half-max are calculated separately and 
-%      averaged). This method does not allow for overlapping events to occur in
-%      a given suprathreshold region, and does not guarantee at least one 
-%      spectral event per trial.
+%      maxima. Discard those of lesser magnitude in each suprathreshold 
+%      region, respectively, s.t. only the greatest local maximum in each 
+%      region survives (when more than one local maxima in a region have 
+%      the same greatest value, their respective event timing, freq. 
+%      location, and boundaries at full-width half-max are calculated 
+%      separately and averaged). This method does not allow for overlapping
+%      events to occur in a given suprathreshold region and does not 
+%      guarantee the presence of within-band, suprathreshold activity in 
+%      any given trial will render an event.
 %   3) Find spectral events by first thresholding 
 %      normalized TFR in frequency band of interest, then finding local 
 %      maxima. Discard those of lesser magnitude in each suprathreshold region,
@@ -27,16 +30,16 @@ function specEv_struct = spectralevents_find(findMethod,eventBand, thrFOM, tVec,
 %      greatest value, their respective event timing, freq. location, and 
 %      boundaries at full-width half-max are calculated separately and 
 %      averaged). This method does not allow for overlapping events to occur in
-%      a given suprathreshold region, but guarantees at least one spectral 
-%      per trial.
+%      a given suprathreshold region and ensures the presence of 
+%      within-band, suprathreshold activity in any given trial will render 
+%      an event.
 %
 % specEv_struct = spectralevents_find(findMethod,eventBand,thrFOM,tVec,fVec,TFR,classLabels)
 % 
 % Inputs:
 %   findMethod - integer value specifying which event-finding method 
-%       function (e.g., find_localmax_method_1, find_localmax_method_1, 
-%       etc.) to run. Note that the method specifies how much overlap exists between
-%       events.
+%       function to run. Note that the method specifies how much overlap 
+%       exists between events.
 %   eventBand - range of frequencies ([Fmin_event Fmax_event]; Hz) over 
 %       which above-threshold spectral power events are classified.
 %   thrFOM - factors of median threshold; positive real number used to
@@ -110,9 +113,7 @@ switch findMethod
         error('Unknown event-finding method.')
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Identify and organize event features
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Matrix of event features: each row is an event
 % 11 column matrix with 1. trial index, 2. hit/miss, 3. maxima frequency, 4. lowerbound frequency, 5. upperbound frequency, 6. frequency span, ...
@@ -216,8 +217,9 @@ specEv_struct.IEI = IEI;
     % maxima in un-normalized TFR using imregionalmax, then selecting 
     % suprathreshold peaks within the frequency band of interest. This 
     % method allows for multiple, overlapping events to occur in a given 
-    % suprathreshold region and does not guarantee at least one spectral 
-    % event per trial.
+    % suprathreshold region and does not guarantee the presence of 
+    % within-band, suprathreshold activity in any given trial will render 
+    % an event.
 
         % spectralEvents: 12 column matrix for storing local max event metrics: trial 
         % index, hit/miss, maxima frequency, lowerbound frequency, upperbound 
@@ -292,8 +294,9 @@ specEv_struct.IEI = IEI;
     % 2nd event-finding method: Find spectral events by first thresholding
     % entire normalize TFR (over all frequencies), then finding local 
     % maxima. This method does not allow for overlapping events to occur in
-    % a given suprathreshold region, and does not guarantee at least one spectral 
-    % event per trial.
+    % a given suprathreshold region and does not guarantee the presence of 
+    % within-band, suprathreshold activity in any given trial will render 
+    % an event.
 
         % spectralEvents: 12 column matrix for storing local max event metrics: trial 
         % index, hit/miss, maxima frequency, lowerbound frequency, upperbound 
@@ -415,8 +418,9 @@ specEv_struct.IEI = IEI;
     % 3rd event-finding method: Find spectral events by first thresholding 
     % normalized TFR in frequency band of interest, then finding local 
     % maxima. This method does not allow for overlapping events to occur in
-    % a given suprathreshold region, but guarantees at least one spectral 
-    % per trial.
+    % a given suprathreshold region and ensures the presence of 
+    % within-band, suprathreshold activity in any given trial will render 
+    % an event.
 
         % spectralEvents: 12 column matrix for storing local max event metrics: trial 
         % index, hit/miss, maxima frequency, lowerbound frequency, upperbound 
