@@ -119,7 +119,7 @@ TFRs = {}; %Cell-array for storing the TFRs across subjects
 for subj_j=1:numSubj
     TFR = []; %Matrix for storing freq-by-time-by-trial
     for trl=1:size(X{subj_j},2)
-        [TFR_trl,tVec,~] = spectralevents_tfr(X{subj_j}(:,trl),fVec,Fs,7); %Transformation calculated using a Morlet wavelet (width=7), see 4DToolbox for function details)
+        [TFR_trl,tVec,~] = spectralevents_ts2tfr(X{subj_j}(:,trl),fVec,Fs,7); %Transformation calculated using a Morlet wavelet (width=7), see 4DToolbox for function details)
         TFR = cat(3,TFR,TFR_trl); %Concatenate each trial along the 3rd dimension
     end
     TFRs{subj_j} = TFR; %Append TFR for the given subject

@@ -102,6 +102,7 @@ if flength~=length(fVec) || tlength~=length(tVec) || numTrials~=length(classLabe
 end
 
 % Find events using the method-of-choice
+spectralEvents = []; %Array for storing event results
 switch findMethod
     case 1
         find_localmax_method_1;

@@ -42,7 +42,6 @@ function [TFR,tVec,fVec] = spectralevents_ts2tfr(S,fVec,Fs,width)
 %   -----------------------------------------------------------------------
 
 S = S';
-LNR50 = 1; 
 
 tVec = (1:size(S,2))/Fs;  
 
@@ -50,11 +49,7 @@ B = zeros(length(fVec),size(S,2));
 
 for i=1:size(S,1)          
     for j=1:length(fVec)
-        if LNR50
-            B(j,:) = energyvec(fVec(j),lnr50(detrend(S(i,:)),Fs),Fs,width) + B(j,:);
-        else
-            B(j,:) = energyvec(fVec(j),detrend(S(i,:)),Fs,width) + B(j,:);
-        end
+        B(j,:) = energyvec(fVec(j),detrend(S(i,:)),Fs,width) + B(j,:);
     end
 end
 TFR = B/size(S,1);     
