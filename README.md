@@ -55,7 +55,7 @@ Outputs:
 ```
 [TFR,tVec,fVec] = spectralevents_ts2tfr(S,fVec,Fs,width)
 ```
-Calculates the TFR (in spectral power) of a time-series waveform by convolving in the time-domain with a Morlet wavelet.
+Calculates the TFR (in spectral power) of a time-series waveform by convolving in the time-domain with a Morlet wavelet. **Note that this version does not currently control for convolution edge effects where the Morlet wavelet is not completely overlapping the time-series. The purpose of this TFR calculation is to give an approximation of transient activity, though a more thorough analysis should crop edge effects off of the TFR.**
 
 Inputs:
 * `S` - column vector of the time-series signal.
