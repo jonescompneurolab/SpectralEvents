@@ -1,6 +1,6 @@
 function specEv_struct = spectralevents_find(findMethod, eventBand, thrFOM, tVec, fVec, TFR, classLabels)
 % SPECTRALEVENTS_FIND Algorithm for finding and calculating spectral 
-%   events on a trial-by-trial basis of of a single subject/session. Uses 
+%   events on a trial-by-trial basis of a single subject/session. Uses 
 %   one of three methods before further analyzing and organizing event 
 %   features:
 %
@@ -34,7 +34,7 @@ function specEv_struct = spectralevents_find(findMethod, eventBand, thrFOM, tVec
 %      within-band, suprathreshold activity in any given trial will render 
 %      an event.
 %
-% specEv_struct = spectralevents_find(findMethod,eventBand,thrFOM,tVec,fVec,TFR,classLabels)
+% specEv_struct = SPECTRALEVENTS_FIND(findMethod,eventBand,thrFOM,tVec,fVec,TFR,classLabels)
 % 
 % Inputs:
 %   findMethod - integer value specifying which event-finding method 
@@ -112,6 +112,13 @@ switch findMethod
         find_localmax_method_3;
     otherwise
         error('Unknown event-finding method.')
+end
+
+% Make sure this subject/session contains >1 events
+if isempty(spectralEvents)
+    disp('Warning!! This subject/session contains no events!!')
+    specEv_struct = struct('TrialSummary',[],'Events',[],'IEI',[]);
+    return;
 end
 
 % Identify and organize event features

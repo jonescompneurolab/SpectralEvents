@@ -1,9 +1,9 @@
 function spectralevents_vis(specEv_struct, timeseries, TFRs, tVec, fVec)
-% SPECTRALEVENTS_VIS Conduct basic analysis for the purpose of 
+% SPECTRALEVENTS_VIS Conducts basic analysis for the purpose of 
 %   visualizing dataset spectral event features and generates spectrogram 
 %   and probability histogram plots.
 %
-% spectralevents_VIS(specEv_struct,timeseries,TFRs,tVec,fVec)
+% SPECTRALEVENTS_VIS(specEv_struct,timeseries,TFRs,tVec,fVec)
 %
 % Inputs:
 %   specEv_struct - spectralevents structure array.
@@ -54,7 +54,7 @@ for subj_i=1:numSubj
     maximaTiming = specEv_struct(subj_i).Events.Events.maximatiming;
     maximaFreq = specEv_struct(subj_i).Events.Events.maximafreq;
     
-    eventBand_inds = fVec(fVec>=eventBand(1) & fVec<=eventBand(2)); %Indices of freq vector within eventBand
+    eventBand_inds = find(fVec>=eventBand(1) & fVec<=eventBand(2)); %Indices of freq vector within eventBand
     classes = unique(classLabels); %Array of unique class labels
     
     % Make plots for each type of class
@@ -87,7 +87,7 @@ for subj_i=1:numSubj
         set(gca,'xtick',x_tick);
         set(gca,'ticklength',[0.0075 0.025])
         set(gca,'xticklabel',[])
-        set(gca,'ytick',[fVec(1),eventBand,fVec(end)])
+        set(gca,'ytick',union(fVec([1,end]),eventBand))
         ylabel('Hz')
         pos = get(gca,'position');
         colormap jet
@@ -106,7 +106,7 @@ for subj_i=1:numSubj
         set(gca,'xtick',x_tick);
         set(gca,'ticklength',[0.0075 0.025])
         set(gca,'xticklabel',[])
-        set(gca,'ytick',[fVec(1),eventBand,fVec(end)])
+        set(gca,'ytick',union(fVec([1,end]),eventBand))
         pos = get(gca,'position');
         colormap jet
         cb = colorbar;
