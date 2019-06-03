@@ -77,7 +77,7 @@ for subj_i=1:numSubj
         
         % Find sample trials to view
         rng('default');
-        randTrial_inds = randperm(numel(trial_inds),numSampTrials); %Sample trial indices
+        randTrial_inds = [1:numSampTrials]; %randperm(numel(trial_inds),numSampTrials); %Sample trial indices
         
         % Plot average raw TFR
         figure
@@ -184,6 +184,10 @@ for subj_i=1:numSubj
         set(gca,'ticklength',[0.0075 0.025])
         set(gca,'xticklabel',x_tick_labels)
         xlabel('s')
+
+        figureName = strcat('./test_results/matlab/prestim_humandetection_600hzMEG_subject', num2str(subj_i), '_class_', num2str(classes(cls_i)), '.png');
+        saveas(gcf,figureName);
+
     end
 end
 
