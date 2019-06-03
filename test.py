@@ -12,8 +12,19 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
+
+#################################################
+# Translation of spectral events code to python
+#
+#   By: Tim Bardouille, 2019
+#       Dalhousie University, Halifax, NS, Canada
+#       tim.bardouille@dal.ca
+#
 # Top-level run script for finding spectral events in test data 
 # provided by original SpectralEvents GitHub repo.
+#
+#   Note: only method 1 for finding events is implemented
+#
 
 ####################################################################
 # Main Code

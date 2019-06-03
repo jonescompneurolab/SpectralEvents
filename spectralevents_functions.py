@@ -6,8 +6,17 @@ import scipy.ndimage as ndimage
 import scipy.ndimage.filters as filters
 import matplotlib.pyplot as plt
 
-# TO DO: 
-# change _vis to work more generally (e.g., for one class)
+#################################################
+# Translation of spectral events code to python
+#
+#   By: Tim Bardouille, 2019
+#       Dalhousie University, Halifax, NS, Canada
+#       tim.bardouille@dal.ca
+#
+#   These functions will generate comparable results to the Matlab
+#       code in the SpectralEvent repo
+#
+#   Note: only method 1 for finding events is implemented
 #
 
 def spectralevents_ts2tfr (S,fVec,Fs,width):
