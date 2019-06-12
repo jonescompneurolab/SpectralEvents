@@ -1,5 +1,4 @@
 import sys
-import mne
 import numpy as np
 import scipy.signal as signal
 import scipy.ndimage as ndimage
@@ -323,7 +322,7 @@ def find_localmax_method_1(TFR, fVec, tVec, eventThresholdByFrequency, classLabe
                                                                thisPeakF, thisPeakPower)
             lowerEdgeFreq = fVec[lowerInd]
             upperEdgeFreq = fVec[upperInd]
-            FWHMFreq = FWHM
+            FWHMFreq = FWHM * ( fVec[1] - fVec[0] )
 
             # Indices of TFR times < half max power at the frequency of a given local peak
             TFRTimes = thisTFR[thisPeakF, :]

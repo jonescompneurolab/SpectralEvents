@@ -1,16 +1,12 @@
 import os, sys
-import time
-import mne
 import numpy as np
 import scipy.io as io
 import scipy.signal as signal
 import scipy.ndimage as ndimage
 import scipy.ndimage.filters as filters
 import spectralevents_functions as tse
-
-import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
+import matplotlib.pyplot as plt
 
 
 #################################################
@@ -41,8 +37,8 @@ width = 7
 
 thrFOM = 6; #Factors of Median threshold (see Shin et al. eLife 2017 for details concerning this value)
 
-footprintFreq = 4
-footprintTime = 80
+footprintFreq = 8
+footprintTime = 8
 threshold = 0.00
 neighbourhood_size = (footprintFreq,footprintTime)
 

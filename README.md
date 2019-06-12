@@ -89,3 +89,20 @@ See test script `test.m`.
 * Ryan Thorpe, School of Engineering, Brown University, ryvthorpe@gmail.com
 
 Written for MATLAB R2017b.
+
+# Python Adaptation
+
+See test.py and spectralevents_functions.py for translation of Matlab code into Python. Functions are defined as in Matlab code description above. Note that only find_method 1 has been implemented.
+
+## Dependencies:
+* Python 3.6.8 :: Anaconda, Inc.
+* numpy 1.14.2
+* scipy 1.0.1
+* matplotlib 2.2.2
+* pandas 0.22.0
+
+## Example
+See test script `test.py`.
+
+## Contributors:
+* Tim Bardouille, Department of Physics and Atmospheric Science, Dalhousie University, tim.bardouille@dal.ca
