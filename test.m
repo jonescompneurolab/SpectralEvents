@@ -47,3 +47,12 @@ findMethod = 1; %Event-finding method (1 allows for maximal overlap while 2 limi
 vis = true; %Generate standard visualization plots for event features across all subjects/sessions
 %tVec = (1/Fs:1/Fs:1);
 [specEvents,TFRs,timeseries] = spectralevents(eventBand,fVec,Fs,findMethod,vis,x,classLabels); %Run spectral event analysis
+
+% Save figures
+classes = [0,1];
+for subj_i=1:numSubj
+    for class_i=1:2
+        figName = strcat('./test_results/matlab/prestim_humandetection_600hzMEG_subject', num2str(subj_i), '_class_', num2str(classes(class_i)), '.png');
+        saveas(figure((subj_i-1)*2+class_i),figName);
+    end
+end
