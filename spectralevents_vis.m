@@ -97,7 +97,7 @@ for subj_i=1:numSubj
         hold on
         line(tVec',repmat(eventBand,length(tVec),1)','Color','k','LineStyle',':')
         hold off
-        title({'\fontsize{16}Raw TFR',['\fontsize{12}Dataset ',num2str(subj_i),', Trial class ',num2str(classes(cls_i))]})
+        title({'\fontsize{12}Raw TFR',['\fontsize{10}Dataset ',num2str(subj_i),', Trial class ',num2str(classes(cls_i))]})
         
         % Plot average normalized TFR
         subplot('Position',[0.53 0.75 0.37 0.17])
@@ -115,9 +115,11 @@ for subj_i=1:numSubj
         hold on
         line(tVec',repmat(eventBand,length(tVec),1)','Color','k','LineStyle',':')
         hold off
-        title({'\fontsize{16}Normalized (frequency-by-frequency) TFR',['\fontsize{12}Dataset ',num2str(subj_i),', Trial class ',num2str(classes(cls_i))]})
+        title({'\fontsize{12}Normalized (frequency-by-frequency) TFR',['\fontsize{10}Dataset ',num2str(subj_i),', Trial class ',num2str(classes(cls_i))]})
         
         % Plot 10 randomly sampled TFR trials
+        ts_max = max(timeseries{subj_i}(:,trial_inds(randTrial_inds)),[],'all'); % Upper yy-lim
+        ts_min = min(timeseries{subj_i}(:,trial_inds(randTrial_inds)),[],'all'); % Lower yy-lim
         for trl_i=1:numSampTrials
             % Raw TFR trial
             rTrial_sub(trl_i) = subplot('Position',[0.08 0.75-(0.065*trl_i) 0.37 0.05]);
@@ -134,16 +136,18 @@ for subj_i=1:numSubj
             colormap jet
             cb = colorbar;
             cb.Position = [rTrial_pos(1)+rTrial_pos(3)+0.01 rTrial_pos(2) 0.008 rTrial_pos(4)];
-            
+
             % Overlay locations of event peaks and the waveform corresponding with each trial
             hold on
             plot(maximaTiming(trialInd==trial_inds(randTrial_inds(trl_i))),maximaFreq(trialInd==trial_inds(randTrial_inds(trl_i))),'w.') %Add points at event maxima
             yyaxis right
             plot(tVec,timeseries{subj_i}(:,trial_inds(randTrial_inds(trl_i))),'w')
-            %set(gca,'ytick',[])
+            ylim([ts_min-0.1*(ts_max-ts_min), ts_max+0.1*(ts_max-ts_min)])
+            set(gca,'ytick',[])
             set(gca,'yticklabel',[])
+            set(gca,'ycolor','k')
             hold off
-            
+
             % Normalized TFR trial
             nTrial_sub(trl_i) = subplot('Position',[0.53 0.75-(0.065*trl_i) 0.37 0.05]);
             clims = [0 specEv_struct(subj_i).Events.ThrFOM*1.5]; %Standardize upper limit of spectrogram scaling using the FOM threshold
@@ -156,20 +160,21 @@ for subj_i=1:numSubj
             set(gca,'ytick',eventBand)
             nTrial_pos = get(gca,'position');
             colormap jet
-            
+
             % Overlay locations of event peaks and the waveform corresponding with each trial
             hold on
             plot(maximaTiming(trialInd==trial_inds(randTrial_inds(trl_i))),maximaFreq(trialInd==trial_inds(randTrial_inds(trl_i))),'w.') %Add points at event maxima
             yyaxis right
             plot(tVec,timeseries{subj_i}(:,trial_inds(randTrial_inds(trl_i))),'w')
-            %set(gca,'ytick',[])
-            %set(gca,'yticklabel',[])
+            ylim([ts_min-0.1*(ts_max-ts_min), ts_max+0.1*(ts_max-ts_min)])
+            set(gca,'ytick',[])
+            set(gca,'yticklabel',[])
+            set(gca,'ycolor','k')
             hold off
         end
         
         subplot(nTrial_sub(ceil(numel(rTrial_sub)/2)))
         yyaxis right
-        ylabel('Waveform ampl.')
         
         subplot(rTrial_sub(end))
         %cb = colorbar;
@@ -184,10 +189,6 @@ for subj_i=1:numSubj
         set(gca,'ticklength',[0.0075 0.025])
         set(gca,'xticklabel',x_tick_labels)
         xlabel('s')
-
-        figureName = strcat('./test_results/matlab/prestim_humandetection_600hzMEG_subject', num2str(subj_i), '_class_', num2str(classes(cls_i)), '.png');
-        saveas(gcf,figureName);
-
     end
 end
 
