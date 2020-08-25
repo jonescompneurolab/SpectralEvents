@@ -88,7 +88,7 @@ See test script `test.m`.
 * Hyeyoung Shin, Department of Neuroscience, Brown University, shinehyeyoung@gmail.com
 * Ryan Thorpe, School of Engineering, Brown University, ryvthorpe@gmail.com
 
-Written for MATLAB R2017b.
+Written for MATLAB R2019a.
 
 # Python Adaptation
 
