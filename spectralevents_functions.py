@@ -22,22 +22,22 @@ def spectralevents_ts2tfr (S,fVec,Fs,width):
     '''
     Calculates the TFR (in spectral power) of a time-series waveform by 
     convolving in the time-domain with a Morlet wavelet.                            
-    
+
     Input
     -----
     S    : signals = time x Trials      
     fVec    : frequencies over which to calculate TF energy        
     Fs   : sampling frequency
     width: number of cycles in wavelet (> 5 advisable)  
-    
+
     Output
     ------
     t    : time
     f    : frequency
     B    : phase-locking factor = frequency x time
-        
+
     Adapted from Ole Jensen's traces2TFR in the 4Dtools toolbox.
-    
+
     See also SPECTRALEVENTS, SPECTRALEVENTS_FIND, SPECTRALEVENTS_VIS.
     '''
 
@@ -61,13 +61,13 @@ def spectralevents_ts2tfr (S,fVec,Fs,width):
 
     return TFR, tVec, fVec
 
-def spectralevents_find (findMethod, thrFOM, tVec, fVec, TFR, classLabels, neighbourhood_size, threshold, Fs):
+def spectralevents_find (findMethod, thrFOM, tVec, fVec, TFR, classLabels, Fs):
     '''
     SPECTRALEVENTS_FIND Algorithm for finding and calculating spectral 
       events on a trial-by-trial basis of of a single subject/session. Uses 
       one of three methods before further analyzing and organizing event 
       features:
-    
+
       1) (Primary event detection method in Shin et al. eLife 2017): Find 
           spectral events by first retrieving all local maxima in 
           un-normalized TFR using imregionalmax, then selecting suprathreshold
@@ -97,9 +97,9 @@ def spectralevents_find (findMethod, thrFOM, tVec, fVec, TFR, classLabels, neigh
           a given suprathreshold region and ensures the presence of 
           within-band, suprathreshold activity in any given trial will render 
           an event.
-    
+
     specEv_struct = spectralevents_find(findMethod,eventBand,thrFOM,tVec,fVec,TFR,classLabels)
-    
+
     Inputs:
       findMethod - integer value specifying which event-finding method 
           function to run. Note that the method specifies how much overlap 
@@ -119,16 +119,16 @@ def spectralevents_find (findMethod, thrFOM, tVec, fVec, TFR, classLabels, neigh
           labels; associates each trial of the given subject/session to an 
           experimental condition/outcome/state (e.g., hit or miss, detect or 
           non-detect, attend-to or attend away).
-    
+
     Outputs:
       specEv_struct - event feature structure with three main sub-structures:
           TrialSummary (trial-level features), Events (individual event 
           characteristics), and IEI (inter-event intervals from all trials 
           and those associated with only a given class label).
-    
+
     See also SPECTRALEVENTS, SPECTRALEVENTS_FIND, SPECTRALEVENTS_TS2TFR, SPECTRALEVENTS_VIS.
     '''
-    
+
     # Initialize general data parameters
     # Number of elements in discrete frequency spectrum
     flength = TFR.shape[1]
@@ -157,7 +157,7 @@ def spectralevents_find (findMethod, thrFOM, tVec, fVec, TFR, classLabels, neigh
     # Find spectral events using appropriate method
     #    Implementing one for now
     if findMethod == 1:
-        spectralEvents = find_localmax_method_1(TFR, fVec, tVec, eventThresholdByFrequency, classLabels, medianPower, neighbourhood_size, threshold, Fs)
+        spectralEvents = find_localmax_method_1(TFR, fVec, tVec, eventThresholdByFrequency, classLabels, medianPower, Fs)
     elif findMethod == 2:
         spectralEvents = find_localmax_method_2 # HACK!!!!
     elif findMethod == 3:
@@ -174,7 +174,7 @@ def energyvec(f,s,Fs,width):
     Fs: sampling frequency
     width : width of Morlet wavelet (>= 5 suggested).
     '''
-    
+
     dt = 1/Fs
     sf = f/width
     st = 1/(2 * np.pi * sf)
@@ -196,10 +196,10 @@ def morlet(f,t,width):
     The wavelet will be normalized so the total energy is 1.
     width defines the ``width'' of the wavelet. 
     A value >= 5 is suggested.
-    
+
     Ref: Tallon-Baudry et al., J. Neurosci. 15, 722-734 (1997)
     '''
-    
+
     sf = f/width
     st = 1/(2 * np.pi * sf)
     A = 1/(st * np.sqrt(2 * np.pi))
@@ -212,7 +212,7 @@ def fwhm_lower_upper_bound1(vec, peakInd, peakValue):
     Function to find the lower and upper indices within which the vector is less than the FWHM
       with some rather complicated boundary rules (Shin, eLife, 2017)
     '''
-    
+
     halfMax = peakValue/2
 
     # Extract data before the peak only (data should be rising at the end of the new array)
@@ -264,8 +264,8 @@ def fwhm_lower_upper_bound1(vec, peakInd, peakValue):
 
     return lowerInd, upperInd, FWHM
 
-def find_localmax_method_1(TFR, fVec, tVec, eventThresholdByFrequency, classLabels, medianPower, neighbourhood_size,
-                           threshold, Fs):
+def find_localmax_method_1(TFR, fVec, tVec, eventThresholdByFrequency,
+                           classLabels, medianPower, Fs):
     '''
     1st event-finding method (primary event detection method in Shin et
     al. eLife 2017): Find spectral events by first retrieving all local
@@ -300,13 +300,15 @@ def find_localmax_method_1(TFR, fVec, tVec, eventThresholdByFrequency, classLabe
 
         # Find local maxima in the TFR data
         data = thisTFR
-        # Check 3x3 footprint centered at each pixel of the spectrogram
+        # Find maximum amoung adjacent pixels (3x3 footprint) for each pixel
         data_max = filters.maximum_filter(data, size=(3, 3))
         maxima = (data == data_max)
-        # Rule out subthreshold pixels
-        maxima[data_max < threshold] = 0
+        data_min = filters.minimum_filter(data, size=(3, 3))
+        # Rule out pixels with footprints that have flatlined
+        maxima[data_max == data_min] = False
         labeled, num_objects = ndimage.label(maxima)
-        xy = np.array(ndimage.center_of_mass(data, labeled, range(1, num_objects + 1)))
+        xy = np.array(ndimage.center_of_mass(data, labels=labeled,
+                                             index=range(1, num_objects + 1)))
 
         numPeaks = len(xy)
 

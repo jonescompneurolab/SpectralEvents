@@ -22,7 +22,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-
 ####################################################################
 # Main Code
 ####################################################################
@@ -35,26 +34,19 @@ fVec = np.arange(1,60+1)            # Vector of fequency values over which to ca
 Fs = 600                            # Sampling rate of time-series
 findMethod = 1                      # Event-finding method (1 allows for maximal overlap while 2 limits overlap in each respective suprathreshold region)
 width = 7
-
-thrFOM = 6; #Factors of Median threshold (see Shin et al. eLife 2017 for details concerning this value)
-
-footprintFreq = 8
-footprintTime = 8
-threshold = 0.00
-neighbourhood_size = (footprintFreq,footprintTime)
-
+thrFOM = 6; # Factors of Median threshold (see Shin et al. eLife 2017 for details concerning this value)
 vis = True
 
 ################################
 # Processing starts here
 subjectIDs = np.arange(numSubj)+1
 
-# Load data sessions/subjects from the same experimental setup so that 
-# spectral event features are differentially characterized only between the 
-# desired trial classification labels: in this case, detection vs. 
+# Load data sessions/subjects from the same experimental setup so that
+# spectral event features are differentially characterized only between the
+# desired trial classification labels: in this case, detection vs.
 # non-detection
 #
-# Note: each .mat file contains: 
+# Note: each .mat file contains:
 #   'prestim_raw_yes_no' - 200 trials x 600 time samples matrix of time series data
 #   'YorN' - 200 trials x 1 matrix of 1s or 0s to indicate trial label
 x = []
@@ -71,9 +63,9 @@ Fn = Fs/2                   # Nyquist frequency
 dt = 1/Fs                   # Sampling time interval
 Fmin = 1/(numSamples*dt)    # Minimum resolvable frequency
 
-if fVec[0] < Fmin: 
+if fVec[0] < Fmin:
     sys.exit('Frequency vector includes values outside the resolvable/alias-free range.')
-elif fVec[-1] > Fn: 
+elif fVec[-1] > Fn:
     sys.exit('Frequency vector includes values outside the resolvable/alias-free range.')
 elif np.abs(fVec[1]-fVec[0]) < Fmin:
     sys.exit('Frequency vector includes values outside the resolvable/alias-free range.')
@@ -84,13 +76,13 @@ specEvents = []
 ctr = 1
 for thisX in x:
 
-    # Convert data to TFR 
+    # Convert data to TFR
     thisData = thisX['prestim_raw_yes_no']
     thisClassLabels = thisX['YorN']
     thisTFR, tVec, fVec = tse.spectralevents_ts2tfr( thisData.T, fVec, Fs, width )
     TFR.append( thisTFR )
 
-    # Normalize the TFR data [tr x f x t] to the median value per frequency band 
+    # Normalize the TFR data [tr x f x t] to the median value per frequency band
     numTrials, numFreqBins, numSamples = thisTFR.shape
     TFR_order = np.transpose(thisTFR, axes=[1,0,2]) # [f x tr x t]
     TFR_reshape = np.reshape(TFR_order, (numFreqBins, numTrials*numSamples))
@@ -99,12 +91,12 @@ for thisX in x:
     thisTFR_norm = thisTFR/TFRmeds_expanded
 
     # Find local maxima in TFR
-    thisSpecEvents = tse.spectralevents_find (findMethod, thrFOM, tVec, fVec, thisTFR, thisClassLabels, 
-        neighbourhood_size, threshold, Fs)
+    thisSpecEvents = tse.spectralevents_find (findMethod, thrFOM, tVec, fVec,
+                                              thisTFR, thisClassLabels, Fs)
     thisSpecEvents = pd.DataFrame( thisSpecEvents )
     specEvents.append( thisSpecEvents )
 
-    # Extract event attributes for this test data 
+    # Extract event attributes for this test data
     classes = np.unique( thisSpecEvents['Hit/Miss'].tolist() )
 
     # Plot results?
@@ -113,7 +105,7 @@ for thisX in x:
         # Plot results for each class of trial
         for clss in classes:
 
-            # Get TFR, time course, and trial IDs for this class of trials only 
+            # Get TFR, time course, and trial IDs for this class of trials only
             trial_inds = np.where(thisClassLabels == clss)[0]
             classTFR = thisTFR[trial_inds,:,:]
             classTFR_norm = thisTFR_norm[trial_inds,:,:]
@@ -129,21 +121,16 @@ for thisX in x:
             classEvents = classEvents[classEvents['Outlier Event']==1]
 
             # Make figure
-            fig, axs = tse.spectralevents_vis( classEvents, classData, classTFR, classTFR_norm, 
+            fig, axs = tse.spectralevents_vis( classEvents, classData, classTFR, classTFR_norm,
                 tVec, fVec, eventBand )
             # Add title
             axs[0,0].set_title( 'DataSet ' + str(ctr) + ', Trial class ' + str(clss) )
 
             # Save figure
-            figName = os.path.join('test_results', 'python', 
-                    "".join(['prestim_humandetection_600hzMEG_subject', str(ctr), '_class_', 
+            figName = os.path.join('test_results', 'python',
+                    "".join(['prestim_humandetection_600hzMEG_subject', str(ctr), '_class_',
                     str(clss), '.png']))
             fig.savefig(figName)
             plt.close()
-    
+
     ctr = ctr + 1
-    
-
-
-
-
