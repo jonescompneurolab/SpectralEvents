@@ -149,9 +149,9 @@ def spectralevents_find (findMethod, thrFOM, tVec, fVec, TFR, classLabels, neigh
     # Validate consistency of parameter dimensions
     if flength != len(fVec):
         sys.exit('Mismatch in frequency dimensions!')
-    if tlength != len(tVec): 
+    if tlength != len(tVec):
         sys.exit('Mismatch in time dimensions!')
-    if numTrials != len(classLabels): 
+    if numTrials != len(classLabels):
         sys.exit('Mismatch in number of trials!')
 
     # Find spectral events using appropriate method
@@ -300,11 +300,11 @@ def find_localmax_method_1(TFR, fVec, tVec, eventThresholdByFrequency, classLabe
 
         # Find local maxima in the TFR data
         data = thisTFR
-        data_max = filters.maximum_filter(data, neighbourhood_size)
+        # Check 3x3 footprint centered at each pixel of the spectrogram
+        data_max = filters.maximum_filter(data, size=(3, 3))
         maxima = (data == data_max)
-        data_min = filters.minimum_filter(data, neighbourhood_size)
-        diff = ((data_max - data_min) > threshold)
-        maxima[diff == 0] = 0
+        # Rule out subthreshold pixels
+        maxima[data_max < threshold] = 0
         labeled, num_objects = ndimage.label(maxima)
         xy = np.array(ndimage.center_of_mass(data, labeled, range(1, num_objects + 1)))
 
@@ -395,7 +395,7 @@ def spectralevents_vis ( specEv, timeseries, TFR, TFR_norm, tVec, fVec, eventBan
     c = a*b
     eventBand_inds = np.where( c )
 
-    # Inter-trial average 
+    # Inter-trial average
     avgTFR = np.squeeze(np.mean(TFR,axis=0))
     avgTFR_norm = np.squeeze(np.mean(TFR_norm,axis=0))
 
@@ -417,9 +417,9 @@ def spectralevents_vis ( specEv, timeseries, TFR, TFR_norm, tVec, fVec, eventBan
     axs[0,1].axhline(y=eventBand[0])
     axs[0,1].axhline(y=eventBand[1])
 
-    # Trial Loop 
+    # Trial Loop
     for t in np.arange(numSampTrials):
-        
+
         # Get spectral events for this trial and band of interest only
         df = specEv.copy()
         df2 = df[df['Trial']==t]
@@ -429,7 +429,7 @@ def spectralevents_vis ( specEv, timeseries, TFR, TFR_norm, tVec, fVec, eventBan
         times = df4['Peak Time'].tolist()
 
         # Plot trial TFR with time course overlaid
-        im = axs[t+1,0].pcolor(tVec, fVec[eventBand_inds], np.squeeze(TFR[t,eventBand_inds,:]), 
+        im = axs[t+1,0].pcolor(tVec, fVec[eventBand_inds], np.squeeze(TFR[t,eventBand_inds,:]),
             cmap='jet')
         fig.colorbar(im, ax=axs[t+1,0])
         axs[t+1,0].invert_yaxis()
@@ -437,17 +437,17 @@ def spectralevents_vis ( specEv, timeseries, TFR, TFR_norm, tVec, fVec, eventBan
         ax2 = axs[t+1,0].twinx()
         ax2.plot(tVec, timeseries[t,:], 'w', linewidth=0.5)
         axs[t+1,0].set_xlim(tVec[0],tVec[-1])
-        
+
         # Plot trial normalized TFR with time course overlaid
-        im = axs[t+1,1].pcolor(tVec, fVec[eventBand_inds], np.squeeze(TFR_norm[t,eventBand_inds,:]), 
+        im = axs[t+1,1].pcolor(tVec, fVec[eventBand_inds], np.squeeze(TFR_norm[t,eventBand_inds,:]),
             cmap='jet', vmin=0, vmax=10)
         fig.colorbar(im, ax=axs[t+1,1])
         axs[t+1,1].invert_yaxis()
         axs[t+1,1].scatter(times, freqs, c='w', s=5)
         ax2 = axs[t+1,1].twinx()
-        ax2.plot(tVec, timeseries[t,:], 'w', linewidth=0.5)            
+        ax2.plot(tVec, timeseries[t,:], 'w', linewidth=0.5)
         axs[t+1,1].set_xlim(tVec[0],tVec[-1])
-        
+
     axs[t+1,0].set_xlabel('Time [s]')
     axs[t+1,1].set_xlabel('Time [s]')
 
