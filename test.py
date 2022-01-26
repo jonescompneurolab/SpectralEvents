@@ -1,3 +1,16 @@
+'''
+Translation of spectral events code to python
+
+  By: Tim Bardouille, 2019
+      Dalhousie University, Halifax, NS, Canada
+      tim.bardouille@dal.ca
+
+Top-level run script for finding spectral events in test data 
+provided by original SpectralEvents GitHub repo.
+
+  Note: only method 1 for finding events is implemented
+'''
+
 import os, sys
 import numpy as np
 import scipy.io as io
@@ -9,18 +22,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-#################################################
-# Translation of spectral events code to python
-#
-#   By: Tim Bardouille, 2019
-#       Dalhousie University, Halifax, NS, Canada
-#       tim.bardouille@dal.ca
-#
-# Top-level run script for finding spectral events in test data 
-# provided by original SpectralEvents GitHub repo.
-#
-#   Note: only method 1 for finding events is implemented
-#
 
 ####################################################################
 # Main Code
