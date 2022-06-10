@@ -13,13 +13,15 @@ or
 ```
 Imports time-series dataset and finds the TFR for each trial using `spectralevents_ts2tfr`, calls the event-finding function `spectralevents_find` for each subject/session within the dataset, and runs `spectralevents_vis` in order to capture and view spectral event features.
 
-Returns a structure array of spectral event features (specEv_struct), cell array containing the time-frequency responses (TFRs), and cell array of all time-series trials (X) for each subject/session within the dataset comparing various experimental conditions or outcome states corresponding to each trial. By default, this function sets the factors of median threshold at 6.
+Returns a structure array of spectral event features (`specEv_struct`), cell array containing the time-frequency responses (`TFRs`), and cell array of all time-series trials (`X`) for each subject/session within the dataset comparing various experimental conditions or outcome states corresponding to each trial. By default, this function sets the factors of median threshold at 6.
+
+*IMPORTANT*: the `findMethod` specified in `spectralevents_find` will bias the results. It’s important to understand the different methods and to state clearly in any presentation or publication which method was used. In the foundational paper for this toolbox, Shin et al. eLife 2017, `findMethod=1` was applied.
 
 Inputs:
 * `eventBand` - range of frequencies ([Fmin_event,Fmax_event]; Hz) over which above-threshold spectral power events are classified.
 * `fVec` - frequency vector (Hz) over which the time-frequency response (TFR) is calculated. Note that this set must fall within the range of resolvable/alias-free frequency values (i.e. Fmin>=1/(trial duration), Fmax<=(Nyquist freq)).
 * `Fs` - sampling frequency (Hz).
-* `findMethod` - integer value specifying which event-finding method to run. Note that the method specifies how much overlap exists between events.
+* `findMethod` - integer value specifying which event-finding method to run (`1`, `2`, or `3`). Note that the method specifies how much overlap exists between events. Use `1` to replicate the methods used in Shin et al. eLife 2017.
 * `vis` - logical value that determines whether to run basic feature analysis and output standard figures.
 * `X{a}` - m-by-n matrix (of the a-th subject/session cell in cell array X) representing the time-series trials of the given subject. m is the number of timepoints and n is the number of trials. Note that m timepoints must be uniform across all trials and subjects.
 * `classLabels{a}` - numeric or logical trial classification labels (of the a-th subject/session cell in cell array classLabels); associates each trial of the given subject/session to an experimental condition/outcome/state (e.g., hit or miss, detect or non-detect, attend-to or attend away). If classLabels{a} is entered as a single value (e.g., 0 or 1), all trials in the a-th subject/session are associated with that label. Alternatively, classLabels{a} can be entered as a vector of n elements, each corresponding to a trial within the a-th subject/session.
@@ -40,7 +42,7 @@ Algorithm for finding and calculating spectral events on a trial-by-trial basis 
 3. Find spectral events by first thresholding normalized TFR in frequency band of interest, then finding local maxima. Discard those of lesser magnitude in each suprathreshold region, respectively, s.t. only the greatest local maximum in each region survives (when more than one local maxima in a region have the same greatest value, their respective event timing, freq. location, and boundaries at full-width half-max are calculated separately and averaged). This method does not allow for overlapping events to occur in a given suprathreshold region and ensures the presence of within-band, suprathreshold activity in any given trial will render an event.
 
 Inputs:
-* `findMethod` - integer value specifying which event-finding method to run. Note that the method specifies how much overlap exists between events.
+* `findMethod` - integer value specifying which event-finding method to run (`1`, `2`, or `3`). Note that the method specifies how much overlap exists between events. Use `1` to replicate the methods used in Shin et al. eLife 2017.
 * `eventBand` - range of frequencies ([Fmin_event Fmax_event]; Hz) over which above-threshold spectral power events are classified.
 * `thrFOM` - factors of median threshold; positive real number used to threshold local maxima and classify events (see Shin et al. eLife 2017 for discussion concerning this value).
 * `tVec` - time vector (s) over which the time-frequency response (TFR) is calculated.
