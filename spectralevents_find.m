@@ -37,9 +37,10 @@ function specEv_struct = spectralevents_find(findMethod, eventBand, thrFOM, tVec
 % specEv_struct = SPECTRALEVENTS_FIND(findMethod,eventBand,thrFOM,tVec,fVec,TFR,classLabels)
 % 
 % Inputs:
-%   findMethod - integer value specifying which event-finding method 
-%       function to run. Note that the method specifies how much overlap 
-%       exists between events.
+%   findMethod - integer value specifying which event-finding method to use
+%       (1, 2, or 3). Note that the method specifies how much overlap
+%       exists between events. Use 1 to replicate the method used in 
+%       et al. eLife 2017.
 %   eventBand - range of frequencies ([Fmin_event Fmax_event]; Hz) over 
 %       which above-threshold spectral power events are classified.
 %   thrFOM - factors of median threshold; positive real number used to
