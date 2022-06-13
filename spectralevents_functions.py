@@ -192,7 +192,7 @@ def energyvec(f,s,Fs,width):
 
 def morlet(f,t,width):
     '''
-    'Morlet's wavelet for frequency f and time t. 
+    Morlet's wavelet for frequency f and time t. 
     The wavelet will be normalized so the total energy is 1.
     width defines the ``width'' of the wavelet. 
     A value >= 5 is suggested.
