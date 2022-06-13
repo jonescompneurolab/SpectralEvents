@@ -207,6 +207,46 @@ def morlet(f,t,width):
 
     return y
 
+def _localmax(tfr):
+    """Find all local maxima in a time-frequency response spectrogram.
+    Returns
+    -------
+    maxima : list
+        Value at each local maximum.
+    location : list of list
+        Each element contains the index coordinates (1st dim, 2nd dim)
+        corresponding to a given local maximum.
+    """
+
+    max_mask = np.ones(tfr.shape)
+
+    # rule out edges
+    max_mask[0, :] = 0
+    max_mask[-1, :] = 0
+    max_mask[:, 0] = 0
+    max_mask[:, -1] = 0
+
+    # rule out pixels with nearest neighbors that are greater than or equal to
+    # itself
+    # rule out all non-maxima pixels along x-axis
+    df = tfr[:, 1:] - tfr[:, :-1]  # diff along x-axis
+    max_mask[:, 1:] *= df > 0  # pos direction
+    max_mask[:, :-1] *= -df > 0  # neg direction
+    # rule out all non-maxima pixels along y-axis
+    df = tfr[1:, :] - tfr[:-1, :]
+    max_mask[1:, :] *= df > 0
+    max_mask[:-1, :] *= -df > 0
+    # rule out all non-maxima pixels along y=x line (adjacent diagonals)
+    df = tfr[:-1, 1:] - tfr[1:, :-1]
+    max_mask[:-1, 1:] *= df > 0
+    max_mask[1:, :-1] *= -df > 0
+    # rule out all non-maxima pixels along y=-x line (adjacent diagonals)
+    df = tfr[1:, 1:] - tfr[:-1, :-1]
+    max_mask[1:, 1:] *= df > 0
+    max_mask[:-1, :-1] *= -df > 0
+
+    return tfr[max_mask.astype(bool)], np.argwhere(max_mask)
+
 def fwhm_lower_upper_bound1(vec, peakInd, peakValue):
     '''
     Function to find the lower and upper indices within which the vector is less than the FWHM
@@ -299,16 +339,7 @@ def find_localmax_method_1(TFR, fVec, tVec, eventThresholdByFrequency,
         thisTFR = TFR[ti, :, :]
 
         # Find local maxima in the TFR data
-        data = thisTFR
-        # Find maximum amoung adjacent pixels (3x3 footprint) for each pixel
-        data_max = filters.maximum_filter(data, size=(3, 3))
-        maxima = (data == data_max)
-        data_min = filters.minimum_filter(data, size=(3, 3))
-        # Rule out pixels with footprints that have flatlined
-        maxima[data_max == data_min] = False
-        labeled, num_objects = ndimage.label(maxima)
-        xy = np.array(ndimage.center_of_mass(data, labels=labeled,
-                                             index=range(1, num_objects + 1)))
+        _, xy = _localmax(thisTFR)
 
         numPeaks = len(xy)
 
