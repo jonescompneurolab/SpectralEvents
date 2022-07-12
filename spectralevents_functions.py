@@ -406,14 +406,15 @@ def spectralevents_vis ( specEv, timeseries, TFR, TFR_norm, tVec, fVec, eventBan
     fig, axs = plt.subplots(nrows=numSampTrials+1, ncols=2)
 
     # Plot average TFR
-    im = axs[0,0].pcolor(tVec, fVec, avgTFR, cmap='jet')
+    im = axs[0,0].pcolormesh(tVec, fVec, avgTFR, cmap='jet', shading='nearest')
     fig.colorbar(im, ax=axs[0,0])
     axs[0,0].invert_yaxis()
     axs[0,0].axhline(y=eventBand[0])
     axs[0,0].axhline(y=eventBand[1])
 
     # Plot average normalized TFR
-    im = axs[0,1].pcolor(tVec, fVec, avgTFR_norm, cmap='jet')
+    im = axs[0,1].pcolormesh(tVec, fVec, avgTFR_norm, cmap='jet',
+                             shading='nearest')
     fig.colorbar(im, ax=axs[0,1])
     axs[0,1].invert_yaxis()
     axs[0,1].axhline(y=eventBand[0])
@@ -428,11 +429,13 @@ def spectralevents_vis ( specEv, timeseries, TFR, TFR_norm, tVec, fVec, eventBan
         df3 = df2.drop(df2[df2['Peak Frequency']<eventBand[0]].index)
         df4 = df3.drop(df3[df3['Peak Frequency']>eventBand[1]].index)
         freqs = df4['Peak Frequency'].tolist()
+        freqs_within_band = fVec[eventBand_inds].tolist()
         times = df4['Peak Time'].tolist()
 
         # Plot trial TFR with time course overlaid
-        im = axs[t+1,0].pcolor(tVec, fVec[eventBand_inds], np.squeeze(TFR[t,eventBand_inds,:]),
-            cmap='jet')
+        tfr_within_band = np.squeeze(TFR[t,eventBand_inds,:])
+        im = axs[t+1,0].pcolormesh(tVec, freqs_within_band, tfr_within_band,
+                                   cmap='jet', shading='nearest')
         fig.colorbar(im, ax=axs[t+1,0])
         axs[t+1,0].invert_yaxis()
         axs[t+1,0].scatter(times, freqs, c='w', s=5)
@@ -441,8 +444,10 @@ def spectralevents_vis ( specEv, timeseries, TFR, TFR_norm, tVec, fVec, eventBan
         axs[t+1,0].set_xlim(tVec[0],tVec[-1])
 
         # Plot trial normalized TFR with time course overlaid
-        im = axs[t+1,1].pcolor(tVec, fVec[eventBand_inds], np.squeeze(TFR_norm[t,eventBand_inds,:]),
-            cmap='jet', vmin=0, vmax=10)
+        tfr_norm_within_band = np.squeeze(TFR_norm[t,eventBand_inds,:])
+        im = axs[t+1,1].pcolormesh(tVec, freqs_within_band,
+                                   tfr_norm_within_band, vmin=0, vmax=10,
+                                   cmap='jet', shading='nearest')
         fig.colorbar(im, ax=axs[t+1,1])
         axs[t+1,1].invert_yaxis()
         axs[t+1,1].scatter(times, freqs, c='w', s=5)
