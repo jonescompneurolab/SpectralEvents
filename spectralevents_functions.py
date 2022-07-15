@@ -61,7 +61,8 @@ def spectralevents_ts2tfr (S,fVec,Fs,width):
 
     return TFR, tVec, fVec
 
-def spectralevents_find (findMethod, thrFOM, tVec, fVec, TFR, classLabels, Fs):
+
+def find_events(threshold_fom, tVec, fVec, TFR, Fs):
     '''
     SPECTRALEVENTS_FIND Algorithm for finding and calculating spectral 
       events on a trial-by-trial basis of of a single subject/session. Uses 
@@ -75,35 +76,11 @@ def spectralevents_find (findMethod, thrFOM, tVec, fVec, TFR, classLabels, Fs):
           multiple, overlapping events to occur in a given suprathreshold 
           region and does not guarantee the presence of within-band, 
           suprathreshold activity in any given trial will render an event.
-      2) Find spectral events by first thresholding
-          entire normalize TFR (over all frequencies), then finding local 
-          maxima. Discard those of lesser magnitude in each suprathreshold 
-          region, respectively, s.t. only the greatest local maximum in each 
-          region survives (when more than one local maxima in a region have 
-          the same greatest value, their respective event timing, freq. 
-          location, and boundaries at full-width half-max are calculated 
-          separately and averaged). This method does not allow for overlapping
-          events to occur in a given suprathreshold region and does not 
-          guarantee the presence of within-band, suprathreshold activity in 
-          any given trial will render an event.
-      3) Find spectral events by first thresholding 
-          normalized TFR in frequency band of interest, then finding local 
-          maxima. Discard those of lesser magnitude in each suprathreshold region,
-          respectively, s.t. only the greatest local maximum in each region
-          survives (when more than one local maxima in a region have the same 
-          greatest value, their respective event timing, freq. location, and 
-          boundaries at full-width half-max are calculated separately and 
-          averaged). This method does not allow for overlapping events to occur in
-          a given suprathreshold region and ensures the presence of 
-          within-band, suprathreshold activity in any given trial will render 
-          an event.
 
-    specEv_struct = spectralevents_find(findMethod,eventBand,thrFOM,tVec,fVec,TFR,classLabels)
+
+    specEv_struct = spectralevents_find(eventBand,threshold,tVec,fVec,TFR)
 
     Inputs:
-      findMethod - integer value specifying which event-finding method 
-          function to run. Note that the method specifies how much overlap 
-          exists between events.
       eventBand - range of frequencies ([Fmin_event Fmax_event]; Hz) over 
           which above-threshold spectral power events are classified.
       thrFOM - factors of median threshold; positive real number used to
@@ -115,18 +92,12 @@ def spectralevents_find (findMethod, thrFOM, tVec, fVec, TFR, classLabels, Fs):
           (TFR) is calcuated.
       TFR - time-frequency response (TFR) (trial-frequency-time) for a
           single subject/session.
-      classLabels - numeric or logical 1-row array of trial classification 
-          labels; associates each trial of the given subject/session to an 
-          experimental condition/outcome/state (e.g., hit or miss, detect or 
-          non-detect, attend-to or attend away).
 
     Outputs:
       specEv_struct - event feature structure with three main sub-structures:
           TrialSummary (trial-level features), Events (individual event 
           characteristics), and IEI (inter-event intervals from all trials 
           and those associated with only a given class label).
-
-    See also SPECTRALEVENTS, SPECTRALEVENTS_FIND, SPECTRALEVENTS_TS2TFR, SPECTRALEVENTS_VIS.
     '''
 
     # Initialize general data parameters
@@ -136,7 +107,6 @@ def spectralevents_find (findMethod, thrFOM, tVec, fVec, TFR, classLabels, Fs):
     tlength = TFR.shape[2]
     # Number of trials
     numTrials = TFR.shape[0]
-    classes = np.unique(classLabels)
 
     # Median power at each frequency across all trials
     TFRpermute = np.transpose(TFR, [1, 2, 0]) # freq x time x trial
@@ -144,24 +114,17 @@ def spectralevents_find (findMethod, thrFOM, tVec, fVec, TFR, classLabels, Fs):
     medianPower = np.median(TFRreshape, axis=1)
 
     # Spectral event threshold for each frequency value
-    eventThresholdByFrequency = thrFOM*medianPower
+    eventThresholdByFrequency = threshold_fom*medianPower
 
     # Validate consistency of parameter dimensions
     if flength != len(fVec):
         sys.exit('Mismatch in frequency dimensions!')
     if tlength != len(tVec):
         sys.exit('Mismatch in time dimensions!')
-    if numTrials != len(classLabels):
-        sys.exit('Mismatch in number of trials!')
 
     # Find spectral events using appropriate method
-    #    Implementing one for now
-    if findMethod == 1:
-        spectralEvents = find_localmax_method_1(TFR, fVec, tVec, eventThresholdByFrequency, classLabels, medianPower, Fs)
-    elif findMethod == 2:
-        spectralEvents = find_localmax_method_2 # HACK!!!!
-    elif findMethod == 3:
-        spectralEvents = find_localmax_method_3 # HACK!!!!
+    #    Implementing find_method=1 for now
+    spectralEvents = find_localmax_method_1(TFR, fVec, tVec, eventThresholdByFrequency, medianPower, Fs)
 
     return spectralEvents
 
@@ -265,7 +228,7 @@ def fwhm_lower_upper_bound1(vec, peakInd, peakValue):
     return lowerInd, upperInd, FWHM
 
 def find_localmax_method_1(TFR, fVec, tVec, eventThresholdByFrequency,
-                           classLabels, medianPower, Fs):
+                           medianPower, Fs):
     '''
     1st event-finding method (primary event detection method in Shin et
     al. eLife 2017): Find spectral events by first retrieving all local
@@ -353,7 +316,6 @@ def find_localmax_method_1(TFR, fVec, tVec, eventThresholdByFrequency,
             #        maxima/median power
             peakParameters = {
                 'Trial': ti,
-                'Hit/Miss': classLabels[ti],
                 'Peak Frequency': fVec[thisPeakF],
                 'Lower Frequency Bound': lowerEdgeFreq,
                 'Upper Frequency Bound': upperEdgeFreq,
@@ -372,7 +334,7 @@ def find_localmax_method_1(TFR, fVec, tVec, eventThresholdByFrequency,
 
     return spectralEvents
 
-def spectralevents_vis ( specEv, timeseries, TFR, TFR_norm, tVec, fVec, eventBand ):
+def spectralevents_vis (specEv, timeseries, TFR, TFR_norm, tVec, fVec, eventBand):
     '''
     Function to plot spectral events on test data (to check against Matlab code)
     
