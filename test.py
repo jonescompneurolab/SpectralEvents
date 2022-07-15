@@ -14,9 +14,6 @@ provided by original SpectralEvents GitHub repo.
 import os, sys
 import numpy as np
 import scipy.io as io
-import scipy.signal as signal
-import scipy.ndimage as ndimage
-import scipy.ndimage.filters as filters
 import spectralevents_functions as tse
 import pandas as pd
 import matplotlib.pyplot as plt
