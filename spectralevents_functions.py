@@ -62,7 +62,7 @@ def spectralevents_ts2tfr (S,fVec,Fs,width):
     return TFR, tVec, fVec
 
 
-def find_events(threshold_fom, tVec, fVec, TFR, Fs):
+def find_events(event_band, threshold_fom, tVec, fVec, TFR, Fs):
     '''
     SPECTRALEVENTS_FIND Algorithm for finding and calculating spectral 
       events on a trial-by-trial basis of of a single subject/session. Uses 
@@ -124,7 +124,7 @@ def find_events(threshold_fom, tVec, fVec, TFR, Fs):
 
     # Find spectral events using appropriate method
     #    Implementing find_method=1 for now
-    spectralEvents = find_localmax_method_1(TFR, fVec, tVec, eventThresholdByFrequency, medianPower, Fs)
+    spectralEvents = find_localmax_method_1(TFR, fVec, tVec, event_band, eventThresholdByFrequency, medianPower, Fs)
 
     return spectralEvents
 
@@ -227,7 +227,7 @@ def fwhm_lower_upper_bound1(vec, peakInd, peakValue):
 
     return lowerInd, upperInd, FWHM
 
-def find_localmax_method_1(TFR, fVec, tVec, eventThresholdByFrequency,
+def find_localmax_method_1(TFR, fVec, tVec, event_band, eventThresholdByFrequency,
                            medianPower, Fs):
     '''
     1st event-finding method (primary event detection method in Shin et
@@ -253,7 +253,7 @@ def find_localmax_method_1(TFR, fVec, tVec, eventThresholdByFrequency,
     # Number of trials
     numTrials = TFR.shape[0]
 
-    spectralEvents = []
+    spectralEvents = list()
 
     # Retrieve all local maxima in TFR using python equivalent of imregionalmax
     for ti in range(numTrials):
@@ -270,18 +270,26 @@ def find_localmax_method_1(TFR, fVec, tVec, eventThresholdByFrequency,
         # Rule out pixels with footprints that have flatlined
         maxima[data_max == data_min] = False
         labeled, num_objects = ndimage.label(maxima)
-        xy = np.array(ndimage.center_of_mass(data, labels=labeled,
-                                             index=range(1, num_objects + 1)))
+        yx = ndimage.center_of_mass(data, labels=labeled,
+                                    index=range(1, num_objects + 1))
 
-        numPeaks = len(xy)
+        #numPeaks = len(yx)
 
         peakF = []
         peakT = []
         peakPower = []
-        for thisXY in xy:
-            peakF.append(int(thisXY[0]))
-            peakT.append(int(thisXY[1]))
-            peakPower.append(thisTFR[peakF[-1], peakT[-1]])
+        for f_idx, t_idx in yx:
+            f_idx = int(round(f_idx))
+            t_idx = int(round(t_idx))
+            event_freq = fVec[f_idx]
+            if (event_freq >= event_band[0] and
+                event_freq <= event_band[1] and
+                thisTFR[f_idx, t_idx] > eventThresholdByFrequency[f_idx]):
+                peakF.append(f_idx)
+                peakT.append(t_idx)
+                peakPower.append(thisTFR[f_idx, t_idx])
+
+        numPeaks = len(peakF)
 
         # Find local maxima lowerbound, upperbound, and full width at half max
         #    for both frequency and time
@@ -325,14 +333,13 @@ def find_localmax_method_1(TFR, fVec, tVec, eventThresholdByFrequency,
                 'Event Offset Time': upperEdgeTime,
                 'Event Duration': FWHMTime,
                 'Peak Power': thisPeakPower,
-                'Normalized Peak Power': thisPeakPower / medianPower[thisPeakF],
-                'Outlier Event': thisPeakPower > eventThresholdByFrequency[thisPeakF]
+                'Normalized Peak Power': thisPeakPower / medianPower[thisPeakF]
             }
 
             # Build a list of dictionaries
             spectralEvents.append(peakParameters)
 
-    return spectralEvents
+    return np.array(spectralEvents)
 
 def spectralevents_vis (specEv, timeseries, TFR, TFR_norm, tVec, fVec, eventBand):
     '''
@@ -386,13 +393,12 @@ def spectralevents_vis (specEv, timeseries, TFR, TFR_norm, tVec, fVec, eventBand
     for t in np.arange(numSampTrials):
 
         # Get spectral events for this trial and band of interest only
-        df = specEv.copy()
-        df2 = df[df['Trial']==t]
-        df3 = df2.drop(df2[df2['Peak Frequency']<eventBand[0]].index)
-        df4 = df3.drop(df3[df3['Peak Frequency']>eventBand[1]].index)
-        freqs = df4['Peak Frequency'].tolist()
+        event_trials = [event['Trial'] for event in specEv]
+        trial_events = specEv[event_trials==t]
+
+        freqs = [event['Peak Frequency'] for event in trial_events]
         freqs_within_band = fVec[eventBand_inds].tolist()
-        times = df4['Peak Time'].tolist()
+        times = [event['Peak Time'] for event in trial_events]
 
         # Plot trial TFR with time course overlaid
         tfr_within_band = np.squeeze(TFR[t,eventBand_inds,:])
