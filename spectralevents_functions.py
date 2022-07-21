@@ -1,16 +1,8 @@
-'''
-Translation of spectral events code to python
-  By: Tim Bardouille, 2019
-      Dalhousie University, Halifax, NS, Canada
-      tim.bardouille@dal.ca
+'''Spectral Event Analysis functions'''
 
-  These functions will generate comparable results to the Matlab
-      code in the SpectralEvent repo
+# Authors: Tim Bardouille <tim.bardouille@dal.ca>
+#          Ryan Thorpe <ryvthorpe@gmail.com>
 
-  Note: only method 1 for finding events is implemented
-'''
-
-import sys
 import numpy as np
 import scipy.signal as signal
 import scipy.ndimage as ndimage
@@ -118,9 +110,9 @@ def find_events(event_band, threshold_fom, tVec, fVec, TFR, Fs):
 
     # Validate consistency of parameter dimensions
     if flength != len(fVec):
-        sys.exit('Mismatch in frequency dimensions!')
+        raise ValueError('Mismatch in frequency dimensions!')
     if tlength != len(tVec):
-        sys.exit('Mismatch in time dimensions!')
+        raise ValueError('Mismatch in time dimensions!')
 
     # Find spectral events using appropriate method
     #    Implementing find_method=1 for now
