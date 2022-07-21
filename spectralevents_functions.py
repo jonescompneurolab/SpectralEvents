@@ -18,7 +18,7 @@ import scipy.ndimage.filters as filters
 import matplotlib.pyplot as plt
 
 
-def spectralevents_ts2tfr (S,fVec,Fs,width):
+def spectralevents_ts2tfr(S, fVec, Fs, width):
     '''
     Calculates the TFR (in spectral power) of a time-series waveform by 
     convolving in the time-domain with a Morlet wavelet.                            
@@ -48,13 +48,13 @@ def spectralevents_ts2tfr (S,fVec,Fs,width):
 
     tVec = np.arange(numSamples)/Fs
 
-    TFR = []
+    TFR = list()
     # Trial Loop
     for i in np.arange(numTrials):
         B = np.zeros((numFrequencies, numSamples))
         # Frequency loop
         for j in np.arange(numFrequencies):
-            B[j,:] = energyvec(fVec[j], signal.detrend(S[i,:]), Fs, width)
+            B[j, :] = energyvec(fVec[j], signal.detrend(S[i, :]), Fs, width)
         TFR.append(B)
 
     TFR = np.asarray(TFR)
@@ -109,8 +109,8 @@ def find_events(event_band, threshold_fom, tVec, fVec, TFR, Fs):
     numTrials = TFR.shape[0]
 
     # Median power at each frequency across all trials
-    TFRpermute = np.transpose(TFR, [1, 2, 0]) # freq x time x trial
-    TFRreshape = np.reshape(TFRpermute, (flength, tlength*numTrials))
+    TFRpermute = np.transpose(TFR, [1, 2, 0])  # freq x time x trial
+    TFRreshape = np.reshape(TFRpermute, (flength, tlength * numTrials))
     medianPower = np.median(TFRreshape, axis=1)
 
     # Spectral event threshold for each frequency value
@@ -124,11 +124,14 @@ def find_events(event_band, threshold_fom, tVec, fVec, TFR, Fs):
 
     # Find spectral events using appropriate method
     #    Implementing find_method=1 for now
-    spectralEvents = find_localmax_method_1(TFR, fVec, tVec, event_band, eventThresholdByFrequency, medianPower, Fs)
+    spectralEvents = find_localmax_method_1(TFR, fVec, tVec, event_band,
+                                            eventThresholdByFrequency,
+                                            medianPower, Fs)
 
     return spectralEvents
 
-def energyvec(f,s,Fs,width):
+
+def energyvec(f, s, Fs, width):
     '''
     Return a vector containing the energy as a
     function of time for frequency f. The energy
@@ -138,22 +141,23 @@ def energyvec(f,s,Fs,width):
     width : width of Morlet wavelet (>= 5 suggested).
     '''
 
-    dt = 1/Fs
-    sf = f/width
-    st = 1/(2 * np.pi * sf)
+    dt = 1 / Fs
+    sf = f / width
+    st = 1 / (2 * np.pi * sf)
 
-    t= np.arange(-3.5*st, 3.5*st, dt)
+    t = np.arange(-3.5 * st, 3.5 * st, dt)
     m = morlet(f, t, width)
 
     y = np.convolve(s, m)
-    y = 2 * (dt * np.abs(y))**2
-    lowerLimit = int(np.ceil(len(m)/2))
-    upperLimit = int(len(y)-np.floor(len(m)/2)+1)
+    y = 2 * (dt * np.abs(y)) ** 2
+    lowerLimit = int(np.ceil(len(m) / 2))
+    upperLimit = int(len(y) - np.floor(len(m) / 2) + 1)
     y = y[lowerLimit:upperLimit]
 
     return y
 
-def morlet(f,t,width):
+
+def morlet(f, t, width):
     '''
     Morlet's wavelet for frequency f and time t. 
     The wavelet will be normalized so the total energy is 1.
@@ -163,12 +167,13 @@ def morlet(f,t,width):
     Ref: Tallon-Baudry et al., J. Neurosci. 15, 722-734 (1997)
     '''
 
-    sf = f/width
-    st = 1/(2 * np.pi * sf)
-    A = 1/(st * np.sqrt(2 * np.pi))
-    y = A * np.exp(-t**2 / (2 * st**2)) * np.exp(1j * 2 * np.pi * f * t)
+    sf = f / width
+    st = 1 / (2 * np.pi * sf)
+    A = 1 / (st * np.sqrt(2 * np.pi))
+    y = A * np.exp(-t ** 2 / (2 * st ** 2)) * np.exp(1j * 2 * np.pi * f * t)
 
     return y
+
 
 def fwhm_lower_upper_bound1(vec, peakInd, peakValue):
     '''
@@ -181,8 +186,8 @@ def fwhm_lower_upper_bound1(vec, peakInd, peakValue):
     # Extract data before the peak only (data should be rising at the end of the new array)
     vec1 = vec[0:peakInd]
     # Find indices less than half the max
-    vec1_underThreshold = np.where(vec1<halfMax)[0]
-    if len(vec1_underThreshold)==0:
+    vec1_underThreshold = np.where(vec1 < halfMax)[0]
+    if len(vec1_underThreshold) == 0:
         # There are no indices less than half the max, so we have to estimate the lower edge
         estimateLowerEdge = True
     else:
@@ -193,8 +198,8 @@ def fwhm_lower_upper_bound1(vec, peakInd, peakValue):
     # Extract data following the peak only (data should be falling at the start of the new array)
     vec2 = vec[peakInd:]
     # Find indices less than half the max
-    vec2_underThreshold = np.where(vec2<halfMax)[0]
-    if len(vec2_underThreshold)==0:
+    vec2_underThreshold = np.where(vec2 < halfMax)[0]
+    if len(vec2_underThreshold) == 0:
         # There are no indices less than half the max, so we have to estimate the upper edge
         estimateUpperEdge = True
     else:
@@ -227,7 +232,9 @@ def fwhm_lower_upper_bound1(vec, peakInd, peakValue):
 
     return lowerInd, upperInd, FWHM
 
-def find_localmax_method_1(TFR, fVec, tVec, event_band, eventThresholdByFrequency,
+
+def find_localmax_method_1(TFR, fVec, tVec, event_band,
+                           eventThresholdByFrequency,
                            medianPower, Fs):
     '''
     1st event-finding method (primary event detection method in Shin et
@@ -275,16 +282,15 @@ def find_localmax_method_1(TFR, fVec, tVec, event_band, eventThresholdByFrequenc
 
         #numPeaks = len(yx)
 
-        peakF = []
-        peakT = []
-        peakPower = []
+        peakF = list()
+        peakT = list()
+        peakPower = list()
         for f_idx, t_idx in yx:
             f_idx = int(round(f_idx))
             t_idx = int(round(t_idx))
             event_freq = fVec[f_idx]
-            if (event_freq >= event_band[0] and
-                event_freq <= event_band[1] and
-                thisTFR[f_idx, t_idx] > eventThresholdByFrequency[f_idx]):
+            if (event_freq >= event_band[0] and event_freq <= event_band[1] and
+               thisTFR[f_idx, t_idx] > eventThresholdByFrequency[f_idx]):
                 peakF.append(f_idx)
                 peakT.append(t_idx)
                 peakPower.append(thisTFR[f_idx, t_idx])
@@ -293,8 +299,6 @@ def find_localmax_method_1(TFR, fVec, tVec, event_band, eventThresholdByFrequenc
 
         # Find local maxima lowerbound, upperbound, and full width at half max
         #    for both frequency and time
-        Ffwhm = []
-        Tfwhm = []
         for lmi in range(numPeaks):
             thisPeakF = peakF[lmi]
             thisPeakT = peakT[lmi]
@@ -306,7 +310,7 @@ def find_localmax_method_1(TFR, fVec, tVec, event_band, eventThresholdByFrequenc
                                                                thisPeakF, thisPeakPower)
             lowerEdgeFreq = fVec[lowerInd]
             upperEdgeFreq = fVec[upperInd]
-            FWHMFreq = FWHM * ( fVec[1] - fVec[0] )
+            FWHMFreq = FWHM * (fVec[1] - fVec[0])
 
             # Indices of TFR times < half max power at the frequency of a given local peak
             TFRTimes = thisTFR[thisPeakF, :]
@@ -341,7 +345,8 @@ def find_localmax_method_1(TFR, fVec, tVec, event_band, eventThresholdByFrequenc
 
     return np.array(spectralEvents)
 
-def spectralevents_vis (specEv, timeseries, TFR, TFR_norm, tVec, fVec, eventBand):
+
+def plot_avg_spectrogram(specEv, timeseries, TFR, TFR_norm, tVec, fVec, eventBand):
     '''
     Function to plot spectral events on test data (to check against Matlab code)
     
@@ -361,69 +366,69 @@ def spectralevents_vis (specEv, timeseries, TFR, TFR_norm, tVec, fVec, eventBand
         numSampTrials = numTrials
 
     # Find fVec elements in the band of interest
-    a = fVec>=eventBand[0]
-    b = fVec<=eventBand[1]
+    a = fVec >= eventBand[0]
+    b = fVec <= eventBand[1]
     c = a*b
-    eventBand_inds = np.where( c )
+    eventBand_inds = np.where(c)
 
     # Inter-trial average
-    avgTFR = np.squeeze(np.mean(TFR,axis=0))
-    avgTFR_norm = np.squeeze(np.mean(TFR_norm,axis=0))
+    avgTFR = np.squeeze(np.mean(TFR, axis=0))
+    avgTFR_norm = np.squeeze(np.mean(TFR_norm, axis=0))
 
     ########################
     # Plot TFR data
     fig, axs = plt.subplots(nrows=numSampTrials+1, ncols=2)
 
     # Plot average TFR
-    im = axs[0,0].pcolormesh(tVec, fVec, avgTFR, cmap='jet', shading='nearest')
-    fig.colorbar(im, ax=axs[0,0])
-    axs[0,0].invert_yaxis()
-    axs[0,0].axhline(y=eventBand[0])
-    axs[0,0].axhline(y=eventBand[1])
+    im = axs[0, 0].pcolormesh(tVec, fVec, avgTFR, cmap='jet', shading='nearest')
+    fig.colorbar(im, ax=axs[0, 0])
+    axs[0, 0].invert_yaxis()
+    axs[0, 0].axhline(y=eventBand[0])
+    axs[0, 0].axhline(y=eventBand[1])
 
     # Plot average normalized TFR
-    im = axs[0,1].pcolormesh(tVec, fVec, avgTFR_norm, cmap='jet',
-                             shading='nearest')
-    fig.colorbar(im, ax=axs[0,1])
-    axs[0,1].invert_yaxis()
-    axs[0,1].axhline(y=eventBand[0])
-    axs[0,1].axhline(y=eventBand[1])
+    im = axs[0, 1].pcolormesh(tVec, fVec, avgTFR_norm, cmap='jet',
+                              shading='nearest')
+    fig.colorbar(im, ax=axs[0, 1])
+    axs[0, 1].invert_yaxis()
+    axs[0, 1].axhline(y=eventBand[0])
+    axs[0, 1].axhline(y=eventBand[1])
 
     # Trial Loop
     for t in np.arange(numSampTrials):
 
         # Get spectral events for this trial and band of interest only
         event_trials = [event['Trial'] for event in specEv]
-        trial_events = specEv[event_trials==t]
+        trial_events = specEv[event_trials == t]
 
         freqs = [event['Peak Frequency'] for event in trial_events]
         freqs_within_band = fVec[eventBand_inds].tolist()
         times = [event['Peak Time'] for event in trial_events]
 
         # Plot trial TFR with time course overlaid
-        tfr_within_band = np.squeeze(TFR[t,eventBand_inds,:])
-        im = axs[t+1,0].pcolormesh(tVec, freqs_within_band, tfr_within_band,
-                                   cmap='jet', shading='nearest')
-        fig.colorbar(im, ax=axs[t+1,0])
-        axs[t+1,0].invert_yaxis()
-        axs[t+1,0].scatter(times, freqs, c='w', s=5)
-        ax2 = axs[t+1,0].twinx()
-        ax2.plot(tVec, timeseries[t,:], 'w', linewidth=0.5)
-        axs[t+1,0].set_xlim(tVec[0],tVec[-1])
+        tfr_within_band = np.squeeze(TFR[t, eventBand_inds, :])
+        im = axs[t+1, 0].pcolormesh(tVec, freqs_within_band, tfr_within_band,
+                                    cmap='jet', shading='nearest')
+        fig.colorbar(im, ax=axs[t+1, 0])
+        axs[t+1, 0].invert_yaxis()
+        axs[t+1, 0].scatter(times, freqs, c='w', s=5)
+        ax2 = axs[t+1, 0].twinx()
+        ax2.plot(tVec, timeseries[t, :], 'w', linewidth=0.5)
+        axs[t+1, 0].set_xlim(tVec[0], tVec[-1])
 
         # Plot trial normalized TFR with time course overlaid
-        tfr_norm_within_band = np.squeeze(TFR_norm[t,eventBand_inds,:])
-        im = axs[t+1,1].pcolormesh(tVec, freqs_within_band,
-                                   tfr_norm_within_band, vmin=0, vmax=10,
-                                   cmap='jet', shading='nearest')
-        fig.colorbar(im, ax=axs[t+1,1])
-        axs[t+1,1].invert_yaxis()
-        axs[t+1,1].scatter(times, freqs, c='w', s=5)
-        ax2 = axs[t+1,1].twinx()
-        ax2.plot(tVec, timeseries[t,:], 'w', linewidth=0.5)
-        axs[t+1,1].set_xlim(tVec[0],tVec[-1])
+        tfr_norm_within_band = np.squeeze(TFR_norm[t, eventBand_inds, :])
+        im = axs[t+1, 1].pcolormesh(tVec, freqs_within_band,
+                                    tfr_norm_within_band, vmin=0, vmax=10,
+                                    cmap='jet', shading='nearest')
+        fig.colorbar(im, ax=axs[t+1, 1])
+        axs[t+1, 1].invert_yaxis()
+        axs[t+1, 1].scatter(times, freqs, c='w', s=5)
+        ax2 = axs[t+1, 1].twinx()
+        ax2.plot(tVec, timeseries[t, :], 'w', linewidth=0.5)
+        axs[t+1, 1].set_xlim(tVec[0], tVec[-1])
 
-    axs[t+1,0].set_xlabel('Time [s]')
-    axs[t+1,1].set_xlabel('Time [s]')
+    axs[t+1, 0].set_xlabel('Time [s]')
+    axs[t+1, 1].set_xlabel('Time [s]')
 
     return fig, axs
