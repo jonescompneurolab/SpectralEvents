@@ -10,15 +10,15 @@ import scipy.ndimage.filters as filters
 import matplotlib.pyplot as plt
 
 
-def spectralevents_ts2tfr(S, fVec, Fs, width):
+def spectralevents_ts2tfr(S, freqs, Fs, width):
     '''
     Calculates the TFR (in spectral power) of a time-series waveform by 
     convolving in the time-domain with a Morlet wavelet.                            
 
     Input
     -----
-    S    : signals = time x Trials      
-    fVec    : frequencies over which to calculate TF energy        
+    S    : signals = Trials x Time
+    freqs    : frequencies over which to calculate TF energy        
     Fs   : sampling frequency
     width: number of cycles in wavelet (> 5 advisable)  
 
@@ -33,25 +33,32 @@ def spectralevents_ts2tfr(S, fVec, Fs, width):
     See also SPECTRALEVENTS, SPECTRALEVENTS_FIND, SPECTRALEVENTS_VIS.
     '''
 
-    S = S.T
-    numTrials = S.shape[0]
-    numSamples = S.shape[1]
-    numFrequencies = len(fVec)
+    S = np.array(S)
+    n_trials = S.shape[0]
+    n_samps = S.shape[1]
+    n_freqs = len(freqs)
+    # Validate fVec input
 
-    tVec = np.arange(numSamples)/Fs
+    Fn = Fs / 2  # Nyquist frequency
+    dt = 1 / Fs  # Sampling time interval
+    min_freq = 1 / (n_samps * dt)  # Minimum resolvable frequency
 
-    TFR = list()
+    if freqs[0] < min_freq:
+        raise ValueError('Frequency vector includes values outside the resolvable/alias-free range.')
+    elif freqs[-1] > Fn:
+        raise ValueError('Frequency vector includes values outside the resolvable/alias-free range.')
+    elif np.abs(freqs[1] - freqs[0]) < min_freq:
+        raise ValueError('Frequency vector includes values outside the resolvable/alias-free range.')
+
+    TFR = np.zeros((n_trials, n_freqs, n_samps))
+
     # Trial Loop
-    for i in np.arange(numTrials):
-        B = np.zeros((numFrequencies, numSamples))
+    for trial_idx in np.arange(n_trials):
         # Frequency loop
-        for j in np.arange(numFrequencies):
-            B[j, :] = energyvec(fVec[j], signal.detrend(S[i, :]), Fs, width)
-        TFR.append(B)
+        for freq_idx in np.arange(n_freqs):
+            TFR[trial_idx, freq_idx, :] = energyvec(freqs[freq_idx], signal.detrend(S[trial_idx, :]), Fs, width)
 
-    TFR = np.asarray(TFR)
-
-    return TFR, tVec, fVec
+    return TFR
 
 
 def find_events(event_band, threshold_fom, tVec, fVec, TFR, Fs):
