@@ -3,7 +3,6 @@
 # Authors: Tim Bardouille <tim.bardouille@dal.ca>
 #          Ryan Thorpe <ryvthorpe@gmail.com>
 
-from ast import AsyncFunctionDef
 import numpy as np
 import scipy.signal as signal
 import scipy.ndimage as ndimage
@@ -38,7 +37,7 @@ def spectralevents_ts2tfr(S, freqs, Fs, width):
     n_trials = S.shape[0]
     n_samps = S.shape[1]
     n_freqs = len(freqs)
-    # Validate fVec input
+    # Validate freqs input
 
     Fn = Fs / 2  # Nyquist frequency
     dt = 1 / Fs  # Sampling time interval
@@ -96,7 +95,7 @@ def tfr_normalize(tfr):
     return tfr / med_powers
 
 
-def find_events(event_band, threshold_fom, tVec, fVec, TFR, Fs):
+def find_events(event_band, threshold_fom, times, freqs, TFR, Fs):
     '''
     SPECTRALEVENTS_FIND Algorithm for finding and calculating spectral 
       events on a trial-by-trial basis of of a single subject/session. Uses 
@@ -112,17 +111,17 @@ def find_events(event_band, threshold_fom, tVec, fVec, TFR, Fs):
           suprathreshold activity in any given trial will render an event.
 
 
-    specEv_struct = spectralevents_find(eventBand,threshold,tVec,fVec,TFR)
+    specEv_struct = spectralevents_find(event_band,threshold,times,freqs,TFR)
 
     Inputs:
-      eventBand - range of frequencies ([Fmin_event Fmax_event]; Hz) over 
+      event_band - range of frequencies ([Fmin_event Fmax_event]; Hz) over 
           which above-threshold spectral power events are classified.
       thrFOM - factors of median threshold; positive real number used to
           threshold local maxima and classify events (see Shin et al. eLife 
           2017 for discussion concerning this value).
-      tVec - time vector (s) over which the time-frequency response (TFR) is 
+      times - time vector (s) over which the time-frequency response (TFR) is 
           calcuated.
-      fVec - frequency vector (Hz) over which the time-frequency response 
+      freqs - frequency vector (Hz) over which the time-frequency response 
           (TFR) is calcuated.
       TFR - time-frequency response (TFR) (trial-frequency-time) for a
           single subject/session.
@@ -151,14 +150,14 @@ def find_events(event_band, threshold_fom, tVec, fVec, TFR, Fs):
     eventThresholdByFrequency = threshold_fom*medianPower
 
     # Validate consistency of parameter dimensions
-    if flength != len(fVec):
+    if flength != len(freqs):
         raise ValueError('Mismatch in frequency dimensions!')
-    if tlength != len(tVec):
+    if tlength != len(times):
         raise ValueError('Mismatch in time dimensions!')
 
     # Find spectral events using appropriate method
     #    Implementing find_method=1 for now
-    spectralEvents = find_localmax_method_1(TFR, fVec, tVec, event_band,
+    spectralEvents = find_localmax_method_1(TFR, freqs, times, event_band,
                                             eventThresholdByFrequency,
                                             medianPower, Fs)
 
@@ -267,7 +266,7 @@ def fwhm_lower_upper_bound1(vec, peakInd, peakValue):
     return lowerInd, upperInd, FWHM
 
 
-def find_localmax_method_1(TFR, fVec, tVec, event_band,
+def find_localmax_method_1(TFR, freqs, times, event_band,
                            eventThresholdByFrequency,
                            medianPower, Fs):
     '''
@@ -322,7 +321,7 @@ def find_localmax_method_1(TFR, fVec, tVec, event_band,
         for f_idx, t_idx in yx:
             f_idx = int(round(f_idx))
             t_idx = int(round(t_idx))
-            event_freq = fVec[f_idx]
+            event_freq = freqs[f_idx]
             if (event_freq >= event_band[0] and event_freq <= event_band[1] and
                thisTFR[f_idx, t_idx] > eventThresholdByFrequency[f_idx]):
                 peakF.append(f_idx)
@@ -342,16 +341,16 @@ def find_localmax_method_1(TFR, fVec, tVec, event_band,
             TFRFrequencies = thisTFR[:, thisPeakT]
             lowerInd, upperInd, FWHM = fwhm_lower_upper_bound1(TFRFrequencies,
                                                                thisPeakF, thisPeakPower)
-            lowerEdgeFreq = fVec[lowerInd]
-            upperEdgeFreq = fVec[upperInd]
-            FWHMFreq = FWHM * (fVec[1] - fVec[0])
+            lowerEdgeFreq = freqs[lowerInd]
+            upperEdgeFreq = freqs[upperInd]
+            FWHMFreq = FWHM * (freqs[1] - freqs[0])
 
             # Indices of TFR times < half max power at the frequency of a given local peak
             TFRTimes = thisTFR[thisPeakF, :]
             lowerInd, upperInd, FWHM = fwhm_lower_upper_bound1(TFRTimes,
                                                                thisPeakT, thisPeakPower)
-            lowerEdgeTime = tVec[lowerInd]
-            upperEdgeTime = tVec[upperInd]
+            lowerEdgeTime = times[lowerInd]
+            upperEdgeTime = times[upperInd]
             FWHMTime = FWHM / Fs
 
             # Put peak characteristics to a dictionary
@@ -362,11 +361,11 @@ def find_localmax_method_1(TFR, fVec, tVec, event_band,
             #        maxima/median power
             peakParameters = {
                 'Trial': ti,
-                'Peak Frequency': fVec[thisPeakF],
+                'Peak Frequency': freqs[thisPeakF],
                 'Lower Frequency Bound': lowerEdgeFreq,
                 'Upper Frequency Bound': upperEdgeFreq,
                 'Frequency Span': FWHMFreq,
-                'Peak Time': tVec[thisPeakT],
+                'Peak Time': times[thisPeakT],
                 'Event Onset Time': lowerEdgeTime,
                 'Event Offset Time': upperEdgeTime,
                 'Event Duration': FWHMTime,
@@ -380,89 +379,80 @@ def find_localmax_method_1(TFR, fVec, tVec, event_band,
     return np.array(spectralEvents)
 
 
-def plot_avg_spectrogram(specEv, timeseries, TFR, TFR_norm, tVec, fVec, eventBand):
+def plot_avg_spectrogram(spec_events, timeseries, TFR, times, freqs, event_band, example_trials=None):
     '''
     Function to plot spectral events on test data (to check against Matlab code)
     
-    specEv = spectral event characteristics 
+    spec_events = spectral event characteristics 
     timeseries = trials x time electrophysiological data
     TFR = trials x frequency x time TFR of timeseries
     TFR = trials x frequency x time normalized TFR of timeseries
-    tVec = vector of time samples
-    fVec = vector of frequency bins
-    eventBand = vector with min and max frequency for spectral event mapping
+    times = vector of time samples
+    freqs = vector of frequency bins
+    event_band = vector with min and max frequency for spectral event mapping
     '''
 
-    numSampTrials = 10
+    if example_trials is not None:
+        trial_idx_set = set(range(TFR.shape[0]))
+        trial_idx_subset = set(example_trials)
+        if trial_idx_subset.intersection(trial_idx_set) != trial_idx_subset:
+            raise ValueError('One or more of the specified example trial '
+                             'indices does not exist in the provided TFR '
+                             'array.')
 
-    numTrials = TFR.shape[0]
-    if numTrials < numSampTrials:
-        numSampTrials = numTrials
+    # convert to numpy array if not already
+    freqs = np.array(freqs)
 
-    # Find fVec elements in the band of interest
-    a = fVec >= eventBand[0]
-    b = fVec <= eventBand[1]
-    c = a*b
-    eventBand_inds = np.where(c)
+    # frequencies within the band of interest
+    band_mask = np.logical_and(freqs >= event_band[0], freqs <= event_band[1])
 
-    # Inter-trial average
-    avgTFR = np.squeeze(np.mean(TFR, axis=0))
-    avgTFR_norm = np.squeeze(np.mean(TFR_norm, axis=0))
+    fig, axs = plt.subplots(nrows=len(example_trials) + 1, ncols=1,
+                            sharex=True)
 
-    ########################
-    # Plot TFR data
-    fig, axs = plt.subplots(nrows=numSampTrials+1, ncols=2)
+    # plot trial-average TFR
+    TFR_avg = np.squeeze(np.mean(TFR, axis=0))
+    im = axs[0].pcolormesh(times, freqs, TFR_avg, cmap='jet',
+                           shading='nearest')
+    fig.colorbar(im, ax=axs[0])
+    axs[0].axhline(y=event_band[0], c='w', linewidth=2., linestyle=':',
+                   alpha=.9)
+    axs[0].axhline(y=event_band[1], c='w', linewidth=2., linestyle=':',
+                   alpha=.9)
 
-    # Plot average TFR
-    im = axs[0, 0].pcolormesh(tVec, fVec, avgTFR, cmap='jet', shading='nearest')
-    fig.colorbar(im, ax=axs[0, 0])
-    axs[0, 0].invert_yaxis()
-    axs[0, 0].axhline(y=eventBand[0])
-    axs[0, 0].axhline(y=eventBand[1])
+    # plot TFR + events for example trials
+    if example_trials is not None:
 
-    # Plot average normalized TFR
-    im = axs[0, 1].pcolormesh(tVec, fVec, avgTFR_norm, cmap='jet',
-                              shading='nearest')
-    fig.colorbar(im, ax=axs[0, 1])
-    axs[0, 1].invert_yaxis()
-    axs[0, 1].axhline(y=eventBand[0])
-    axs[0, 1].axhline(y=eventBand[1])
+        max_ts_amplitude = np.max(timeseries[example_trials])
+        min_ts_amplitude = np.min(timeseries[example_trials])
 
-    # Trial Loop
-    for t in np.arange(numSampTrials):
+        #freqs_within_band = freqs[band_mask].tolist()
 
-        # Get spectral events for this trial and band of interest only
-        event_trials = [event['Trial'] for event in specEv]
-        trial_events = specEv[event_trials == t]
+        for count_idx, trial_idx in enumerate(example_trials):
+            # get spectral events for the current trial
+            trial_events = [event for event in spec_events
+                            if event['Trial'] == trial_idx]
 
-        freqs = [event['Peak Frequency'] for event in trial_events]
-        freqs_within_band = fVec[eventBand_inds].tolist()
-        times = [event['Peak Time'] for event in trial_events]
+            # plot trial TFR
+            tfr_within_band = np.squeeze(TFR[trial_idx, band_mask, :])
+            tfr_trial = np.squeeze(TFR[trial_idx, :, :])
+            im = axs[count_idx + 1].pcolormesh(times, freqs,
+                                               tfr_trial,
+                                               cmap='jet',
+                                               shading='nearest')
+            fig.colorbar(im, ax=axs[count_idx + 1])
 
-        # Plot trial TFR with time course overlaid
-        tfr_within_band = np.squeeze(TFR[t, eventBand_inds, :])
-        im = axs[t+1, 0].pcolormesh(tVec, freqs_within_band, tfr_within_band,
-                                    cmap='jet', shading='nearest')
-        fig.colorbar(im, ax=axs[t+1, 0])
-        axs[t+1, 0].invert_yaxis()
-        axs[t+1, 0].scatter(times, freqs, c='w', s=5)
-        ax2 = axs[t+1, 0].twinx()
-        ax2.plot(tVec, timeseries[t, :], 'w', linewidth=0.5)
-        axs[t+1, 0].set_xlim(tVec[0], tVec[-1])
+            # overlay with timecourse
+            ax_twin = axs[count_idx + 1].twinx()
+            ax_twin.plot(times, timeseries[trial_idx, :], 'w', linewidth=.5)
+            ax_twin.set_yticks([])
+            ax_twin.set_ylim(min_ts_amplitude, max_ts_amplitude)
+            axs[count_idx + 1].set_xlim(times[0], times[-1])
 
-        # Plot trial normalized TFR with time course overlaid
-        tfr_norm_within_band = np.squeeze(TFR_norm[t, eventBand_inds, :])
-        im = axs[t+1, 1].pcolormesh(tVec, freqs_within_band,
-                                    tfr_norm_within_band, vmin=0, vmax=10,
-                                    cmap='jet', shading='nearest')
-        fig.colorbar(im, ax=axs[t+1, 1])
-        axs[t+1, 1].invert_yaxis()
-        axs[t+1, 1].scatter(times, freqs, c='w', s=5)
-        ax2 = axs[t+1, 1].twinx()
-        ax2.plot(tVec, timeseries[t, :], 'w', linewidth=0.5)
-        axs[t+1, 1].set_xlim(tVec[0], tVec[-1])
+            # plot event locations
+            event_freqs = [event['Peak Frequency'] for event in trial_events]
+            event_times = [event['Peak Time'] for event in trial_events]
+            axs[count_idx + 1].scatter(event_times, event_freqs, s=50,
+                                       c='w', marker='x')
+    axs[-1].set_xlabel('time (s)')
 
-    axs[t+1, 0].set_xlabel('Time [s]')
-    axs[t+1, 1].set_xlabel('Time [s]')
-
-    return fig, axs
+    return fig
