@@ -3,6 +3,7 @@
 # Authors: Tim Bardouille <tim.bardouille@dal.ca>
 #          Ryan Thorpe <ryvthorpe@gmail.com>
 
+from ast import AsyncFunctionDef
 import numpy as np
 import scipy.signal as signal
 import scipy.ndimage as ndimage
@@ -59,6 +60,40 @@ def spectralevents_ts2tfr(S, freqs, Fs, width):
             TFR[trial_idx, freq_idx, :] = energyvec(freqs[freq_idx], signal.detrend(S[trial_idx, :]), Fs, width)
 
     return TFR
+
+
+def tfr_normalize(tfr):
+    '''Normalize the power in each frequency band of a time-frequency response
+
+    Parameters
+    ----------
+    tfr : array, shape ([n_trials,] n_freqs, n_times)
+        The time-frequency response (TFR) to be normalized.
+
+    Returns
+    -------
+    tfr_norm : array
+        The normalized TFR calculated by dividing the power values in each
+        frequency bin by the median power across all trials and time samples.
+    '''
+
+    if len(tfr.shape) == 3:
+        n_trials, _, n_times = tfr.shape
+        med_powers = np.median(tfr, axis=(0, 2))
+        med_powers_tiled = np.tile(med_powers, (n_trials, n_times, 1))
+        med_powers = np.transpose(med_powers_tiled, axes=(0, 2, 1))
+
+    elif len(tfr.shape) == 2:
+        _, n_times = tfr.shape
+        med_powers = np.median(tfr, axis=1)
+        med_powers_tiled = np.tile(med_powers, (n_times, 1))
+        med_powers = np.transpose(med_powers_tiled, axes=(1, 0))
+
+    else:
+        raise ValueError(f'TFR must be an array of at least 2 dimensions. Got'
+                         '{tfr.shape}')
+
+    return tfr / med_powers
 
 
 def find_events(event_band, threshold_fom, tVec, fVec, TFR, Fs):
