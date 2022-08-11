@@ -89,8 +89,8 @@ def tfr_normalize(tfr):
         med_powers = np.transpose(med_powers_tiled, axes=(1, 0))
 
     else:
-        raise ValueError(f'TFR must be an array of at least 2 dimensions. Got'
-                         '{tfr.shape}')
+        raise ValueError(f'TFR must be an array of at least 2 dimensions. Got '
+                         f'{tfr.shape}')
 
     return tfr / med_powers
 
@@ -379,9 +379,8 @@ def find_localmax_method_1(TFR, freqs, times, event_band,
     return np.array(spectralEvents)
 
 
-def plot_events(spec_events, TFR, times, freqs,
-                event_band, timeseries=None, ax=None,
-                vlim=None, ylim_ts=None, label=None):
+def plot_events(TFR, times, freqs, event_band, spec_events=None,
+                timeseries=None, ax=None, vlim=None, ylim_ts=None, label=None):
 
     if TFR.shape != (len(freqs), len(times)):
         raise ValueError(f'TFR must be an array of shape (n_freqs, n_times) '
@@ -414,8 +413,8 @@ def plot_events(spec_events, TFR, times, freqs,
     ax.set_xlim(times[0], times[-1])
 
     # overlay with timecourse
-    # twin axis needs to be created and yticks set regardless of if a timeseries is provided to ensure
-    # consistency with seaborn tick formatting
+    # twin axis needs to be created and yticks set regardless of if a
+    # timeseries is provided to ensure consistency with seaborn tick formatting
     ax_twin = ax.twinx()
     ax_twin.set_yticks([])
     if timeseries is not None:
@@ -425,9 +424,15 @@ def plot_events(spec_events, TFR, times, freqs,
             ax_twin.set_ylim(ylim_ts[0], ylim_ts[1])
 
     # plot event locations
-    event_times = [event['Peak Time'] for event in spec_events]
-    event_freqs = [event['Peak Frequency'] for event in spec_events]
-    ax.scatter(event_times, event_freqs, s=20, c='w', marker='x', alpha=0.85)
+    if spec_events is not None:
+        event_times = [event['Peak Time'] for event in spec_events]
+        event_freqs = [event['Peak Frequency'] for event in spec_events]
+        # reverse sigmoid: make scatter markers more transparent when there are
+        # more of them
+        alpha = lambda x : (0.6 + 0.4 * np.exp(-0.2 * (x - 30))  # noqa
+                            / (1 + np.exp(-0.2 * (x - 30))))  # noqa
+        ax.scatter(event_times, event_freqs, s=20, c='w', marker='x',
+                   alpha=alpha(len(spec_events)))
 
     # add label on top of spectrogram plot
     if label is not None:
@@ -437,11 +442,11 @@ def plot_events(spec_events, TFR, times, freqs,
     return fig
 
 
-def plot_avg_spectrogram(spec_events, TFR, times, freqs, event_band,
-                         timeseries, example_trials=None, vlim=None):
+def plot_avg_spectrogram(TFR, times, freqs, event_band, spec_events=None,
+                         timeseries=None, example_epochs=None, vlim=None):
     '''
     Function to plot spectral events on test data (to check against Matlab code)
-    
+
     spec_events = spectral event characteristics 
     timeseries = trials x time electrophysiological data
     TFR = trials x frequency x time TFR of timeseries
@@ -451,42 +456,45 @@ def plot_avg_spectrogram(spec_events, TFR, times, freqs, event_band,
     event_band = vector with min and max frequency for spectral event mapping
     '''
 
-    if example_trials is not None:
+    if example_epochs is not None:
         trial_idx_set = set(range(TFR.shape[0]))
-        trial_idx_subset = set(example_trials)
+        trial_idx_subset = set(example_epochs)
         if trial_idx_subset.intersection(trial_idx_set) != trial_idx_subset:
             raise ValueError('One or more of the specified example trial '
                              'indices does not exist in the provided TFR '
                              'array.')
+    else:
+        # set to empty list
+        example_epochs = list()
 
-    fig, axs = plt.subplots(nrows=len(example_trials) + 1, ncols=1,
+    fig, axs = plt.subplots(nrows=len(example_epochs) + 1, ncols=1,
                             sharex=True)
 
     # plot trial-average TFR
     TFR_avg = np.mean(TFR, axis=0).squeeze()
-    plot_events(spec_events, TFR_avg, times, freqs,
-                event_band, ax=axs[0], vlim=vlim, label='trial avg.')
+    plot_events(TFR=TFR_avg, times=times, freqs=freqs,
+                event_band=event_band, spec_events=spec_events,
+                ax=axs[0], vlim=vlim, label='trial avg.')
 
     # plot TFR + events for example trials
-    if example_trials is not None:
-        max_ts_amplitude = np.max(timeseries[example_trials])
-        min_ts_amplitude = np.min(timeseries[example_trials])
+    if timeseries is not None and example_epochs is not None:
+        max_ts_amplitude = np.max(timeseries[example_epochs])
+        min_ts_amplitude = np.min(timeseries[example_epochs])
         ylim_ts = [max_ts_amplitude, min_ts_amplitude]
 
-        for count_idx, trial_idx in enumerate(example_trials):
+        for count_idx, trial_idx in enumerate(example_epochs):
             # get spectral events for the current trial
             trial_events = [event for event in spec_events
                             if event['Trial'] == trial_idx]
 
             # plot trial TFR
-            tfr_trial = TFR[trial_idx, :, :].squeeze()
+            TFR_trial = TFR[trial_idx, :, :].squeeze()
             timeseries_trial = timeseries[trial_idx, :]
 
-            plot_events(spec_events=trial_events, TFR=tfr_trial,
-                        times=times, freqs=freqs,
-                        event_band=event_band, timeseries=timeseries_trial,
-                        ax=axs[count_idx + 1], vlim=vlim, ylim_ts=ylim_ts,
-                        label=f'trial {trial_idx}')
+            plot_events(TFR=TFR_trial, times=times, freqs=freqs,
+                        event_band=event_band, spec_events=trial_events,
+                        timeseries=timeseries_trial, ax=axs[count_idx + 1],
+                        vlim=vlim, ylim_ts=ylim_ts, label=f'epoch {trial_idx}')
 
     axs[-1].set_xlabel('time (s)')
     axs[0].set_ylabel('freq. (Hz)')
