@@ -379,7 +379,66 @@ def find_localmax_method_1(TFR, freqs, times, event_band,
     return np.array(spectralEvents)
 
 
-def plot_avg_spectrogram(spec_events, timeseries, TFR, times, freqs, event_band, example_trials=None):
+def plot_events(spec_events, TFR, times, freqs,
+                event_band, timeseries=None, ax=None,
+                vlim=None, ylim_ts=None, label=None):
+
+    if TFR.shape != (len(freqs), len(times)):
+        raise ValueError(f'TFR must be an array of shape (n_freqs, n_times) '
+                         f'got TFR: {TFR.shape}, freqs: ({len(freqs)},), '
+                         f'times: ({len(times)},)')
+
+    if vlim is None:
+        vlim = [None, None]
+
+    # convert to numpy array if not already
+    freqs = np.array(freqs)
+
+    # frequencies within the band of interest
+    # band_mask = np.logical_and(freqs >= event_band[0], freqs <= event_band[1])
+
+    if ax is None:
+        fig, ax = plt.subplots(1, 1)
+    else:
+        fig = ax.get_figure()
+
+    # plot TFR
+    im = ax.pcolormesh(times, freqs, TFR, cmap='jet', vmin=vlim[0],
+                       vmax=vlim[1], shading='nearest')
+    fig.colorbar(im, ax=ax)
+    ax.axhline(y=event_band[0], c='w', linewidth=2., linestyle=':',
+               alpha=.7)
+    ax.axhline(y=event_band[1], c='w', linewidth=2., linestyle=':',
+               alpha=.7)
+    ax.set_yticks([freqs[0], event_band[0], event_band[1], freqs[-1]])
+    ax.set_xlim(times[0], times[-1])
+
+    # overlay with timecourse
+    # twin axis needs to be created and yticks set regardless of if a timeseries is provided to ensure
+    # consistency with seaborn tick formatting
+    ax_twin = ax.twinx()
+    ax_twin.set_yticks([])
+    if timeseries is not None:
+        ax_twin.plot(times, timeseries, 'w', linewidth=1., alpha=0.8)
+
+        if ylim_ts is not None:
+            ax_twin.set_ylim(ylim_ts[0], ylim_ts[1])
+
+    # plot event locations
+    event_times = [event['Peak Time'] for event in spec_events]
+    event_freqs = [event['Peak Frequency'] for event in spec_events]
+    ax.scatter(event_times, event_freqs, s=20, c='w', marker='x', alpha=0.85)
+
+    # add label on top of spectrogram plot
+    if label is not None:
+        ax.annotate(label, xy=(0.01, 0.95), xycoords='axes fraction',
+                    va='top', ha='left', color='w', size=10, fontweight='bold')
+
+    return fig
+
+
+def plot_avg_spectrogram(spec_events, TFR, times, freqs, event_band,
+                         timeseries, example_trials=None, vlim=None):
     '''
     Function to plot spectral events on test data (to check against Matlab code)
     
@@ -400,32 +459,19 @@ def plot_avg_spectrogram(spec_events, timeseries, TFR, times, freqs, event_band,
                              'indices does not exist in the provided TFR '
                              'array.')
 
-    # convert to numpy array if not already
-    freqs = np.array(freqs)
-
-    # frequencies within the band of interest
-    band_mask = np.logical_and(freqs >= event_band[0], freqs <= event_band[1])
-
     fig, axs = plt.subplots(nrows=len(example_trials) + 1, ncols=1,
                             sharex=True)
 
     # plot trial-average TFR
-    TFR_avg = np.squeeze(np.mean(TFR, axis=0))
-    im = axs[0].pcolormesh(times, freqs, TFR_avg, cmap='jet',
-                           shading='nearest')
-    fig.colorbar(im, ax=axs[0])
-    axs[0].axhline(y=event_band[0], c='w', linewidth=2., linestyle=':',
-                   alpha=.9)
-    axs[0].axhline(y=event_band[1], c='w', linewidth=2., linestyle=':',
-                   alpha=.9)
+    TFR_avg = np.mean(TFR, axis=0).squeeze()
+    plot_events(spec_events, TFR_avg, times, freqs,
+                event_band, ax=axs[0], vlim=vlim, label='trial avg.')
 
     # plot TFR + events for example trials
     if example_trials is not None:
-
         max_ts_amplitude = np.max(timeseries[example_trials])
         min_ts_amplitude = np.min(timeseries[example_trials])
-
-        #freqs_within_band = freqs[band_mask].tolist()
+        ylim_ts = [max_ts_amplitude, min_ts_amplitude]
 
         for count_idx, trial_idx in enumerate(example_trials):
             # get spectral events for the current trial
@@ -433,26 +479,16 @@ def plot_avg_spectrogram(spec_events, timeseries, TFR, times, freqs, event_band,
                             if event['Trial'] == trial_idx]
 
             # plot trial TFR
-            tfr_within_band = np.squeeze(TFR[trial_idx, band_mask, :])
-            tfr_trial = np.squeeze(TFR[trial_idx, :, :])
-            im = axs[count_idx + 1].pcolormesh(times, freqs,
-                                               tfr_trial,
-                                               cmap='jet',
-                                               shading='nearest')
-            fig.colorbar(im, ax=axs[count_idx + 1])
+            tfr_trial = TFR[trial_idx, :, :].squeeze()
+            timeseries_trial = timeseries[trial_idx, :]
 
-            # overlay with timecourse
-            ax_twin = axs[count_idx + 1].twinx()
-            ax_twin.plot(times, timeseries[trial_idx, :], 'w', linewidth=.5)
-            ax_twin.set_yticks([])
-            ax_twin.set_ylim(min_ts_amplitude, max_ts_amplitude)
-            axs[count_idx + 1].set_xlim(times[0], times[-1])
+            plot_events(spec_events=trial_events, TFR=tfr_trial,
+                        times=times, freqs=freqs,
+                        event_band=event_band, timeseries=timeseries_trial,
+                        ax=axs[count_idx + 1], vlim=vlim, ylim_ts=ylim_ts,
+                        label=f'trial {trial_idx}')
 
-            # plot event locations
-            event_freqs = [event['Peak Frequency'] for event in trial_events]
-            event_times = [event['Peak Time'] for event in trial_events]
-            axs[count_idx + 1].scatter(event_times, event_freqs, s=50,
-                                       c='w', marker='x')
     axs[-1].set_xlabel('time (s)')
+    axs[0].set_ylabel('freq. (Hz)')
 
     return fig
