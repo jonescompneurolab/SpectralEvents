@@ -10,7 +10,7 @@ import scipy.ndimage.filters as filters
 import matplotlib.pyplot as plt
 
 
-def spectralevents_ts2tfr(S, freqs, Fs, width):
+def spectralevents_ts2tfr(S, freqs, Fs, width=7.):
     '''
     Calculates the tfr (in spectral power) of a time-series waveform by 
     convolving in the time-domain with a Morlet wavelet.                            
@@ -162,8 +162,8 @@ def find_events(tfr, times, freqs, event_band, threshold_FOM=6.):
     n_freqs = tfr.shape[1]
     n_times = tfr.shape[2]
 
-    samp_freq = 1 / np.unique(np.diff(times))
-    print(samp_freq)
+    # some time steps might be slightly different due to rounding error, etc.
+    samp_freq = 1 / np.unique(np.diff(times).round(10))
     if len(samp_freq) > 1:
         raise ValueError('Sampling rate is not consistent across time '
                          'samples.')
