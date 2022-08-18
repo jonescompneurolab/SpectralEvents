@@ -10,7 +10,7 @@ import scipy.ndimage.filters as filters
 import matplotlib.pyplot as plt
 
 
-def spectralevents_ts2tfr(S, freqs, Fs, width=7.):
+def tfr(S, freqs, Fs, width=7.):
     '''
     Calculates the tfr (in spectral power) of a time-series waveform by 
     convolving in the time-domain with a Morlet wavelet.                            
@@ -57,7 +57,8 @@ def spectralevents_ts2tfr(S, freqs, Fs, width=7.):
         ts_detrended = signal.detrend(S[trial_idx, :])
         # Frequency loop
         for freq_idx in np.arange(n_freqs):
-            tfr[trial_idx, freq_idx, :] = energyvec(freqs[freq_idx], ts_detrended, Fs, width)
+            tfr[trial_idx, freq_idx, :] = energyvec(freqs[freq_idx],
+                                                    ts_detrended, Fs, width)
 
     return tfr
 
@@ -103,60 +104,48 @@ def tfr_normalize(tfr):
     return tfr / med_powers
 
 
-def find_events(tfr, times, freqs, event_band, threshold_FOM=6.):
-    '''
-    SPECTRALEVENTS_FIND Algorithm for finding and calculating spectral 
-      events on a trial-by-trial basis of of a single subject/session. Uses 
-      one of three methods before further analyzing and organizing event 
-      features:
-
-      1) (Primary event detection method in Shin et al. eLife 2017): Find 
-          spectral events by first retrieving all local maxima in 
-          un-normalized TFR using imregionalmax, then selecting suprathreshold
-          peaks within the frequency band of interest. This method allows for 
-          multiple, overlapping events to occur in a given suprathreshold 
-          region and does not guarantee the presence of within-band, 
-          suprathreshold activity in any given trial will render an event.
-
-
-    specEv_struct = spectralevents_find(event_band,threshold,times,freqs,TFR)
-
-    Inputs:
-      event_band - range of frequencies ([Fmin_event Fmax_event]; Hz) over 
-          which above-threshold spectral power events are classified.
-      thrFOM - factors of median threshold; positive real number used to
-          threshold local maxima and classify events (see Shin et al. eLife 
-          2017 for discussion concerning this value).
-      times - time vector (s) over which the time-frequency response (TFR) is 
-          calcuated.
-      freqs - frequency vector (Hz) over which the time-frequency response 
-          (TFR) is calcuated.
-      tfr - time-frequency response (TFR) (trial-frequency-time) for a
-          single subject/session.
-
-    Outputs:
-      specEv_struct - event feature structure with three main sub-structures:
-          TrialSummary (trial-level features), Events (individual event 
-          characteristics), and IEI (inter-event intervals from all trials 
-          and those associated with only a given class label).
+def find_events(tfr, times, freqs, event_band, thresholds=None,
+                threshold_FOM=6.):
+    '''Locate spectral events in a time-frequency response
 
     Parameters
     ----------
     tfr : array, shape ([n_trials,] n_freqs, n_times)
-        The time-frequency response (TFR) to be normalized.
-
-        # Factors of Median threshold (see Shin et al. eLife 2017 for details concerning this value)
+        The time-frequency response (TFR) in which to search for high power
+        spectral events.
+    times : array-like, shape (n_times,)
+        Time domain of the TFR in seconds.
+    freqs : array-like, shape (n_freqs,)
+        Frequency domain of the TFR in Hertz.
+    event_band : list
+        Lower and upper bounds (inclusive, ) of the frequency band-of-interest
+        (Hz) in which to search for spectral events.
+    thresholds : None | array-like, shape (n_freqs,)
+        If not None, these frequency-specific threshold values (in units of
+        spectral power) will be used to identify suprathreshold spectral
+        events.
+    threshold_FOM : float | int
+        Factor-of-the-median threshold (a.u.) with which to identify
+        suprathreshold spectral events (default: 6). This threshold value is
+        applied across frequencies of the TFR when thresholds=None. See Shin et
+        al. eLife 2017 for more details concerning this value.
 
     Returns
     -------
-    tfr_norm : array
-        The normalized TFR calculated by dividing the power values in each
-        frequency bin by the median power across all trials and time samples.
+    events : list of dict
+        A list of all events found in the TFR. Each element comprises an event
+        that is characterized by dictionary items including it's trial index,
+        time, frequency, duration, and frequency span, and more.
 
     Notes
     -----
-
-
+    This version only supports find-method #1 at the moment. As outlined in
+    Shin et al. eLife (2017), it isolates spectral events by first retrieving 
+    all local maxima in un-normalized TFR using imregionalmax, then selecting
+    suprathreshold peaks within the frequency band of interest. This method
+    allows for multiple, overlapping events to occur in a given suprathreshold 
+    region and does not guarantee that the presence of within-band,
+    suprathreshold activity in any given trial will render an event.
     '''
 
     n_trials = tfr.shape[0]
@@ -184,10 +173,10 @@ def find_events(tfr, times, freqs, event_band, threshold_FOM=6.):
 
     # Find spectral events using appropriate method
     #    Implementing find_method=1 for now
-    spectralEvents = find_localmax_method_1(tfr, freqs, times, event_band,
-                                            thresholds, med_powers, samp_freq)
+    events = find_localmax_method_1(tfr, freqs, times, event_band,
+                                    thresholds, med_powers, samp_freq)
 
-    return spectralEvents
+    return events
 
 
 def energyvec(f, s, Fs, width):
@@ -402,7 +391,7 @@ def find_localmax_method_1(tfr, freqs, times, event_band,
             # Build a list of dictionaries
             spectralEvents.append(peakParameters)
 
-    return np.array(spectralEvents)
+    return spectralEvents
 
 
 def plot_events(tfr, times, freqs, event_band, spec_events=None,
