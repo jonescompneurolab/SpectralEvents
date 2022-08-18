@@ -57,8 +57,8 @@ def tfr(S, freqs, Fs, width=7.):
         ts_detrended = signal.detrend(S[trial_idx, :])
         # Frequency loop
         for freq_idx in np.arange(n_freqs):
-            tfr[trial_idx, freq_idx, :] = energyvec(freqs[freq_idx],
-                                                    ts_detrended, Fs, width)
+            tfr[trial_idx, freq_idx, :] = _energyvec(freqs[freq_idx],
+                                                     ts_detrended, Fs, width)
 
     return tfr
 
@@ -173,13 +173,13 @@ def find_events(tfr, times, freqs, event_band, thresholds=None,
 
     # Find spectral events using appropriate method
     #    Implementing find_method=1 for now
-    events = find_localmax_method_1(tfr, freqs, times, event_band,
-                                    thresholds, med_powers, samp_freq)
+    events = _find_localmax_method_1(tfr, freqs, times, event_band,
+                                     thresholds, med_powers, samp_freq)
 
     return events
 
 
-def energyvec(f, s, Fs, width):
+def _energyvec(f, s, Fs, width):
     '''
     Return a vector containing the energy as a
     function of time for frequency f. The energy
@@ -194,7 +194,7 @@ def energyvec(f, s, Fs, width):
     st = 1 / (2 * np.pi * sf)
 
     t = np.arange(-3.5 * st, 3.5 * st, dt)
-    m = morlet(f, t, width)
+    m = _morlet(f, t, width)
 
     y = np.convolve(s, m)
     y = 2 * (dt * np.abs(y)) ** 2
@@ -205,7 +205,7 @@ def energyvec(f, s, Fs, width):
     return y
 
 
-def morlet(f, t, width):
+def _morlet(f, t, width):
     '''
     Morlet's wavelet for frequency f and time t. 
     The wavelet will be normalized so the total energy is 1.
@@ -223,7 +223,7 @@ def morlet(f, t, width):
     return y
 
 
-def fwhm_lower_upper_bound1(vec, peakInd, peakValue):
+def _fwhm_lower_upper_bound1(vec, peakInd, peakValue):
     '''
     Function to find the lower and upper indices within which the vector is less than the FWHM
       with some rather complicated boundary rules (Shin, eLife, 2017)
@@ -281,9 +281,9 @@ def fwhm_lower_upper_bound1(vec, peakInd, peakValue):
     return lowerInd, upperInd, FWHM
 
 
-def find_localmax_method_1(tfr, freqs, times, event_band,
-                           eventThresholdByFrequency,
-                           medianPower, Fs):
+def _find_localmax_method_1(tfr, freqs, times, event_band,
+                            eventThresholdByFrequency,
+                            medianPower, Fs):
     '''
     1st event-finding method (primary event detection method in Shin et
     al. eLife 2017): Find spectral events by first retrieving all local
@@ -352,18 +352,22 @@ def find_localmax_method_1(tfr, freqs, times, event_band,
             thisPeakT = peakT[lmi]
             thisPeakPower = peakPower[lmi]
 
-            # Indices of tfr frequencies < half max power at the time of a given local peak
+            # Indices of tfr frequencies < half max power at the time of a
+            # given local peak
             tfrFrequencies = thistfr[:, thisPeakT]
-            lowerInd, upperInd, FWHM = fwhm_lower_upper_bound1(tfrFrequencies,
-                                                               thisPeakF, thisPeakPower)
+            lowerInd, upperInd, FWHM = _fwhm_lower_upper_bound1(tfrFrequencies,
+                                                                thisPeakF,
+                                                                thisPeakPower)
             lowerEdgeFreq = freqs[lowerInd]
             upperEdgeFreq = freqs[upperInd]
             FWHMFreq = FWHM * (freqs[1] - freqs[0])
 
-            # Indices of tfr times < half max power at the frequency of a given local peak
+            # Indices of tfr times < half max power at the frequency of a given
+            # local peak
             tfrTimes = thistfr[thisPeakF, :]
-            lowerInd, upperInd, FWHM = fwhm_lower_upper_bound1(tfrTimes,
-                                                               thisPeakT, thisPeakPower)
+            lowerInd, upperInd, FWHM = _fwhm_lower_upper_bound1(tfrTimes,
+                                                                thisPeakT,
+                                                                thisPeakPower)
             lowerEdgeTime = times[lowerInd]
             upperEdgeTime = times[upperInd]
             FWHMTime = FWHM / Fs
