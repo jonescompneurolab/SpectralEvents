@@ -54,9 +54,10 @@ def spectralevents_ts2tfr(S, freqs, Fs, width=7.):
 
     # Trial Loop
     for trial_idx in np.arange(n_trials):
+        ts_detrended = signal.detrend(S[trial_idx, :])
         # Frequency loop
         for freq_idx in np.arange(n_freqs):
-            tfr[trial_idx, freq_idx, :] = energyvec(freqs[freq_idx], signal.detrend(S[trial_idx, :]), Fs, width)
+            tfr[trial_idx, freq_idx, :] = energyvec(freqs[freq_idx], ts_detrended, Fs, width)
 
     return tfr
 
