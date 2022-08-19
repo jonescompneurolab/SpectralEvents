@@ -148,6 +148,7 @@ def find_events(tfr, times, freqs, event_band, thresholds=None,
     suprathreshold activity in any given trial will render an event.
     '''
 
+    tfr = np.atleast_3d(tfr)
     n_trials = tfr.shape[0]
     n_freqs = tfr.shape[1]
     n_times = tfr.shape[2]
@@ -453,7 +454,7 @@ def plot_events(tfr, times, freqs, event_band, spec_events=None,
 
     # add label on top of spectrogram plot
     if label is not None:
-        ax.annotate(label, xy=(0.01, 0.95), xycoords='axes fraction',
+        ax.annotate(label, xy=(0.01, 0.98), xycoords='axes fraction',
                     va='top', ha='left', color='w', size=10, fontweight='bold')
 
     return fig
@@ -461,7 +462,7 @@ def plot_events(tfr, times, freqs, event_band, spec_events=None,
 
 def plot_avg_spectrogram(tfr, times, freqs, event_band, spec_events=None,
                          timeseries=None, example_epochs=None, vlim=None,
-                         show_events=True):
+                         show_events=False):
     '''
     Function to plot spectral events on test data (to check against Matlab code)
 
@@ -493,11 +494,14 @@ def plot_avg_spectrogram(tfr, times, freqs, event_band, spec_events=None,
     fig, axs = plt.subplots(nrows=len(example_epochs) + 1, ncols=1,
                             sharex=True)
 
+    # if example_epochs is None, ensure that axs is still subscriptable
+    axs = np.atleast_1d(axs)
+
     # plot trial-average tfr
     tfr_avg = np.mean(tfr, axis=0).squeeze()
     plot_events(tfr=tfr_avg, times=times, freqs=freqs,
                 event_band=event_band, spec_events=spec_events_agg,
-                ax=axs[0], vlim=vlim, label='trial avg.')
+                ax=axs[0], vlim=vlim, label='epoch avg.')
 
     # plot tfr + events for example trials
     if timeseries is not None and example_epochs is not None:
@@ -521,5 +525,6 @@ def plot_avg_spectrogram(tfr, times, freqs, event_band, spec_events=None,
 
     axs[-1].set_xlabel('time (s)')
     axs[0].set_ylabel('freq. (Hz)')
+    fig.tight_layout()
 
     return fig
