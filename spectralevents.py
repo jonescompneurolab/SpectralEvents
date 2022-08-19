@@ -460,7 +460,8 @@ def plot_events(tfr, times, freqs, event_band, spec_events=None,
 
 
 def plot_avg_spectrogram(tfr, times, freqs, event_band, spec_events=None,
-                         timeseries=None, example_epochs=None, vlim=None):
+                         timeseries=None, example_epochs=None, vlim=None,
+                         show_events=True):
     '''
     Function to plot spectral events on test data (to check against Matlab code)
 
@@ -484,13 +485,18 @@ def plot_avg_spectrogram(tfr, times, freqs, event_band, spec_events=None,
         # set to empty list
         example_epochs = list()
 
+    if show_events:
+        spec_events_agg = spec_events.copy()
+    else:
+        spec_events_agg = None
+
     fig, axs = plt.subplots(nrows=len(example_epochs) + 1, ncols=1,
                             sharex=True)
 
     # plot trial-average tfr
     tfr_avg = np.mean(tfr, axis=0).squeeze()
     plot_events(tfr=tfr_avg, times=times, freqs=freqs,
-                event_band=event_band, spec_events=spec_events,
+                event_band=event_band, spec_events=spec_events_agg,
                 ax=axs[0], vlim=vlim, label='trial avg.')
 
     # plot tfr + events for example trials
