@@ -106,7 +106,7 @@ def tfr_normalize(tfr):
 
 def find_events(tfr, times, freqs, event_band, thresholds=None,
                 threshold_FOM=6.):
-    '''Locate spectral events in a time-frequency response
+    '''Locate spectral events in a time-frequency response.
 
     Parameters
     ----------
@@ -118,8 +118,8 @@ def find_events(tfr, times, freqs, event_band, thresholds=None,
     freqs : array-like, shape (n_freqs,)
         Frequency domain of the TFR in Hertz.
     event_band : list
-        Lower and upper bounds (inclusive, ) of the frequency band-of-interest
-        (Hz) in which to search for spectral events.
+        Lower and upper bounds (inclusive, Hz) of the frequency band-of-
+        interest in which to search for spectral events.
     thresholds : None | array-like, shape (n_freqs,)
         If not None, these frequency-specific threshold values (in units of
         spectral power) will be used to identify suprathreshold spectral
@@ -401,6 +401,43 @@ def _find_localmax_method_1(tfr, freqs, times, event_band,
 
 def plot_events(tfr, times, freqs, event_band, spec_events=None,
                 timeseries=None, ax=None, vlim=None, ylim_ts=None, label=None):
+    '''Plot a single TFR spectrogram.
+
+    Parameters
+    ----------
+    tfr : array, shape (n_freqs, n_times)
+        A time-frequency response (TFR).
+    times : array-like, shape (n_times,)
+        Time domain of the TFR in seconds.
+    freqs : array-like, shape (n_freqs,)
+        Frequency domain of the TFR in Hertz.
+    event_band : list
+        Lower and upper bounds (inclusive, Hz) of the frequency band-of-
+        interest in which spectral events were detected.
+    spec_events : list of dict | None
+        A list of all events found in the TFRs. Each element comprises an event
+        that is characterized by dictionary items including it's trial index,
+        time, frequency, duration, and frequency span, and more.
+    timeseries : array, shape (n_times,) | None
+        The timeseries associated with the TFR.
+    ax : None | Matplotlib.axes.Axes instance
+        The Axes instance with wich to plot the spectrogram on. If None, a new
+        Axes object is created.
+    vlim : list, shape (2,) | None
+        If not None, sets the colorbar lower and upper bounds for the
+        spectrogram across all axes of the returned figure. If None, each
+        spectrogram (including example epochs) sets its vlim independently.
+    ylim_ts : list | None
+        The lower and upper limits of the timeseries (if applicable) overlayed
+        on the spectrogram. If None, these values are automatically assigned.
+    label : str | None
+        A label to overlay in the upper left corner of this plot.
+
+    Return
+    ------
+    fig : Matplotlib.figure.Figure instance
+        The Figure instance containing the spectrogram.
+    '''
 
     if tfr.shape != (len(freqs), len(times)):
         raise ValueError(f'tfr must be an array of shape (n_freqs, n_times) '
@@ -463,16 +500,41 @@ def plot_events(tfr, times, freqs, event_band, spec_events=None,
 def plot_avg_spectrogram(tfr, times, freqs, event_band, spec_events=None,
                          timeseries=None, example_epochs=None, vlim=None,
                          show_events=False):
-    '''
-    Function to plot spectral events on test data (to check against Matlab code)
+    '''Plot the average spectrogram over all TFR epochs/trials.
 
-    spec_events = spectral event characteristics 
-    timeseries = trials x time electrophysiological data
-    tfr = trials x frequency x time tfr of timeseries
-    tfr = trials x frequency x time normalized tfr of timeseries
-    times = vector of time samples
-    freqs = vector of frequency bins
-    event_band = vector with min and max frequency for spectral event mapping
+    Parameters
+    ----------
+    tfr : array, shape (n_trials, n_freqs, n_times)
+        A stack of time-frequency response (TFR) epochs/trials.
+    times : array-like, shape (n_times,)
+        Time domain of each TFR in seconds.
+    freqs : array-like, shape (n_freqs,)
+        Frequency domain of each TFR in Hertz.
+    event_band : list
+        Lower and upper bounds (inclusive, Hz) of the frequency band-of-
+        interest in which spectral events were detected.
+    spec_events : list of dict | None
+        A list of all events found in the TFRs. Each element comprises an event
+        that is characterized by dictionary items including it's trial index,
+        time, frequency, duration, and frequency span, and more. If None, no
+        events are plotted.
+    timeseries : array, shape (n_trials, n_times) | None
+        The stack of timeseries associated with the TFR epochs/trials.
+    example_epochs : list | None
+        The epoch/trial indices that will be used to plot example spectrogram
+        trials alonside the average spectrogram.
+    vlim : list, shape (2,) | None
+        If not None, sets the colorbar lower and upper bounds for the
+        spectrogram across all axes of the returned figure. If None, each
+        spectrogram (including example epochs) sets its vlim independently.
+    show_events : boolean
+        Whether or not to overlay spectral event locations on the average
+        spectrogram.
+
+    Return
+    ------
+    fig : Matplotlib.figure.Figure instance
+        The Figure instance containing the average spectrogram.
     '''
 
     if example_epochs is not None:
