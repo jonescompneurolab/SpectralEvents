@@ -180,15 +180,8 @@ def find_events(tfr, times, freqs, event_band, thresholds=None,
     return events
 
 
-def _energyvec(f, s, Fs, width):
-    '''
-    Return a vector containing the energy as a
-    function of time for frequency f. The energy
-    is calculated using Morlet's wavelets. 
-    s : signal
-    Fs: sampling frequency
-    width : width of Morlet wavelet (>= 5 suggested).
-    '''
+def _energyvec(f, s, Fs, width=7.):
+    '''Spectral energy as a function of frequency using Morlet wavelets.'''
 
     dt = 1 / Fs
     sf = f / width
@@ -302,20 +295,16 @@ def _find_localmax_method_1(tfr, freqs, times, event_band,
             event offset timing,     event duration, maxima power,
             maxima/median power
     '''
-    # Number of elements in discrete frequency spectrum
-    flength = tfr.shape[1]
-    # Number of point in time
-    tlength = tfr.shape[2]
-    # Number of trials
-    numTrials = tfr.shape[0]
+
+    n_trials = tfr.shape[0]
 
     spectralEvents = list()
 
     # Retrieve all local maxima in tfr using python equivalent of imregionalmax
-    for ti in range(numTrials):
+    for trial_idx in range(n_trials):
 
         # Get tfr data for this trial [frequency x time]
-        thistfr = tfr[ti, :, :]
+        thistfr = tfr[trial_idx, :, :]
 
         # Find local maxima in the tfr data
         data = thistfr
@@ -328,8 +317,6 @@ def _find_localmax_method_1(tfr, freqs, times, event_band,
         labeled, num_objects = ndimage.label(maxima)
         yx = ndimage.center_of_mass(data, labels=labeled,
                                     index=range(1, num_objects + 1))
-
-        #numPeaks = len(yx)
 
         peakF = list()
         peakT = list()
@@ -380,7 +367,7 @@ def _find_localmax_method_1(tfr, freqs, times, event_band,
             #        event offset timing,     event duration, maxima power,
             #        maxima/median power
             peakParameters = {
-                'Trial': ti,
+                'Trial': trial_idx,
                 'Peak Frequency': freqs[thisPeakF],
                 'Lower Frequency Bound': lowerEdgeFreq,
                 'Upper Frequency Bound': upperEdgeFreq,
