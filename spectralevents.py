@@ -34,7 +34,7 @@ def tfr(S, freqs, Fs, width=7.):
     '''
 
     S = np.array(S)
-    n_trials = S.shape[0]
+    n_epochs = S.shape[0]
     n_samps = S.shape[1]
     n_freqs = len(freqs)
     # Validate freqs input
@@ -50,10 +50,10 @@ def tfr(S, freqs, Fs, width=7.):
     elif np.abs(freqs[1] - freqs[0]) < min_freq:
         raise ValueError('Frequency vector includes values outside the resolvable/alias-free range.')
 
-    tfr = np.zeros((n_trials, n_freqs, n_samps))
+    tfr = np.zeros((n_epochs, n_freqs, n_samps))
 
     # Trial Loop
-    for trial_idx in np.arange(n_trials):
+    for trial_idx in np.arange(n_epochs):
         ts_detrended = signal.detrend(S[trial_idx, :])
         # Frequency loop
         for freq_idx in np.arange(n_freqs):
@@ -75,20 +75,20 @@ def tfr_normalize(tfr):
 
     Parameters
     ----------
-    tfr : array, shape ([n_trials,] n_freqs, n_times)
+    tfr : array, shape ([n_epochs,] n_freqs, n_times)
         The time-frequency response (TFR) to be normalized.
 
     Returns
     -------
     tfr_norm : array
-        The normalized TFR calculated by dividing the power values in each
+        The normalized TFR calculated by dividing the power values in each                'Trial': trial_idx,
         frequency bin by the median power across all trials and time samples.
     '''
 
     if len(tfr.shape) == 3:
-        n_trials, _, n_times = tfr.shape
+        n_epochs, _, n_times = tfr.shape
         med_powers = np.median(tfr, axis=(0, 2))
-        med_powers_tiled = np.tile(med_powers, (n_trials, n_times, 1))
+        med_powers_tiled = np.tile(med_powers, (n_epochs, n_times, 1))
         med_powers = np.transpose(med_powers_tiled, axes=(0, 2, 1))
 
     elif len(tfr.shape) == 2:
@@ -110,7 +110,7 @@ def find_events(tfr, times, freqs, event_band, thresholds=None,
 
     Parameters
     ----------
-    tfr : array, shape ([n_trials,] n_freqs, n_times)
+    tfr : array, shape ([n_epochs,] n_freqs, n_times)
         The time-frequency response (TFR) in which to search for high power
         spectral events.
     times : array-like, shape (n_times,)
@@ -132,10 +132,11 @@ def find_events(tfr, times, freqs, event_band, thresholds=None,
 
     Returns
     -------
-    events : list of dict
-        A list of all events found in the TFR. Each element comprises an event
-        that is characterized by dictionary items including it's trial index,
-        time, frequency, duration, and frequency span, and more.
+    events : list of list of dict
+        A nested list with n_epochs elements in the outer list and n_events in
+        the inner list. Each inner element comprises an event that is
+        characterized by dictionary items including it's location in time,
+        location in frequency, duration, and frequency span, and more.
 
     Notes
     -----
@@ -149,7 +150,7 @@ def find_events(tfr, times, freqs, event_band, thresholds=None,
     '''
 
     tfr = np.atleast_3d(tfr)
-    n_trials = tfr.shape[0]
+    n_epochs = tfr.shape[0]
     n_freqs = tfr.shape[1]
     n_times = tfr.shape[2]
 
@@ -162,7 +163,7 @@ def find_events(tfr, times, freqs, event_band, thresholds=None,
 
     # concatenate trials together to make one big spectrogram, then find thresh
     tfr_permute = np.transpose(tfr, [1, 2, 0])  # freq x time x trial
-    tfr_concat_trials = np.reshape(tfr_permute, (n_freqs, n_times * n_trials))
+    tfr_concat_trials = np.reshape(tfr_permute, (n_freqs, n_times * n_epochs))
     thresholds, med_powers = _get_power_thresholds(tfr_concat_trials,
                                                    FOM_threshold=threshold_FOM)
 
@@ -289,19 +290,21 @@ def _find_localmax_method_1(tfr, freqs, times, event_band,
     an event.
 
     spectralEvents: 12 column matrix for storing local max event metrics:
-            trial index,            hit/miss,         maxima frequency,
+            hit/miss,         maxima frequency,
             lowerbound frequency,     upperbound frequency,
             frequency span,         maxima timing,     event onset timing,
             event offset timing,     event duration, maxima power,
             maxima/median power
     '''
 
-    n_trials = tfr.shape[0]
+    n_epochs = tfr.shape[0]
 
-    spectralEvents = list()
+    all_epochs_events = list()
 
     # Retrieve all local maxima in tfr using python equivalent of imregionalmax
-    for trial_idx in range(n_trials):
+    for trial_idx in range(n_epochs):
+
+        epoch_events = list()
 
         # Get tfr data for this trial [frequency x time]
         thistfr = tfr[trial_idx, :, :]
@@ -361,13 +364,12 @@ def _find_localmax_method_1(tfr, freqs, times, event_band,
             FWHMTime = FWHM / Fs
 
             # Put peak characteristics to a dictionary
-            #        trial index,            hit/miss,         maxima frequency,
+            #        hit/miss,         maxima frequency,
             #        lowerbound frequency,     upperbound frequency,
             #        frequency span,         maxima timing,     event onset timing,
             #        event offset timing,     event duration, maxima power,
             #        maxima/median power
             peakParameters = {
-                'Trial': trial_idx,
                 'Peak Frequency': freqs[thisPeakF],
                 'Lower Frequency Bound': lowerEdgeFreq,
                 'Upper Frequency Bound': upperEdgeFreq,
@@ -381,14 +383,16 @@ def _find_localmax_method_1(tfr, freqs, times, event_band,
             }
 
             # Build a list of dictionaries
-            spectralEvents.append(peakParameters)
+            epoch_events.append(peakParameters)
 
-    return spectralEvents
+        all_epochs_events.append(epoch_events)
+
+    return all_epochs_events
 
 
 def plot_events(tfr, times, freqs, event_band, spec_events=None,
                 timeseries=None, ax=None, vlim=None, ylim_ts=None, label=None):
-    '''Plot a single TFR spectrogram.
+    '''Plot a single TFR spectrogram overlayed with spectral events.
 
     Parameters
     ----------
@@ -401,10 +405,11 @@ def plot_events(tfr, times, freqs, event_band, spec_events=None,
     event_band : list
         Lower and upper bounds (inclusive, Hz) of the frequency band-of-
         interest in which spectral events were detected.
-    spec_events : list of dict | None
-        A list of all events found in the TFRs. Each element comprises an event
-        that is characterized by dictionary items including it's trial index,
-        time, frequency, duration, and frequency span, and more.
+    spec_events : list of dict
+        A single-level list where each element comprises an event that is
+        characterized by dictionary items including it's location in time,
+        location in frequency, duration, and frequency span, and more. If None,
+        no events are plotted.
     timeseries : array, shape (n_times,) | None
         The timeseries associated with the TFR.
     ax : None | Matplotlib.axes.Axes instance
@@ -491,7 +496,7 @@ def plot_avg_spectrogram(tfr, times, freqs, event_band, spec_events=None,
 
     Parameters
     ----------
-    tfr : array, shape (n_trials, n_freqs, n_times)
+    tfr : array, shape (n_epochs, n_freqs, n_times)
         A stack of time-frequency response (TFR) epochs/trials.
     times : array-like, shape (n_times,)
         Time domain of each TFR in seconds.
@@ -500,12 +505,13 @@ def plot_avg_spectrogram(tfr, times, freqs, event_band, spec_events=None,
     event_band : list
         Lower and upper bounds (inclusive, Hz) of the frequency band-of-
         interest in which spectral events were detected.
-    spec_events : list of dict | None
-        A list of all events found in the TFRs. Each element comprises an event
-        that is characterized by dictionary items including it's trial index,
-        time, frequency, duration, and frequency span, and more. If None, no
-        events are plotted.
-    timeseries : array, shape (n_trials, n_times) | None
+    spec_events : list of list of dict
+        A nested list with n_epochs elements in the outer list and n_events in
+        the inner list. Each inner element comprises an event that is
+        characterized by dictionary items including it's location in time,
+        location in frequency, duration, and frequency span, and more. If None,
+        no events are plotted.
+    timeseries : array, shape (n_epochs, n_times) | None
         The stack of timeseries associated with the TFR epochs/trials.
     example_epochs : list | None
         The epoch/trial indices that will be used to plot example spectrogram
@@ -536,7 +542,7 @@ def plot_avg_spectrogram(tfr, times, freqs, event_band, spec_events=None,
         example_epochs = list()
 
     if show_events:
-        spec_events_agg = spec_events.copy()
+        spec_events_agg = sum(spec_events, [])
     else:
         spec_events_agg = None
 
@@ -558,10 +564,12 @@ def plot_avg_spectrogram(tfr, times, freqs, event_band, spec_events=None,
         min_ts_amplitude = np.min(timeseries[example_epochs])
         ylim_ts = [max_ts_amplitude, min_ts_amplitude]
 
-        for count_idx, trial_idx in enumerate(example_epochs):
+        for plot_idx, trial_idx in enumerate(example_epochs):
             # get spectral events for the current trial
-            trial_events = [event for event in spec_events
-                            if event['Trial'] == trial_idx]
+            if spec_events is not None:
+                trial_events = spec_events[trial_idx]
+            else:
+                trial_events = None
 
             # plot trial tfr
             tfr_trial = tfr[trial_idx, :, :].squeeze()
@@ -569,7 +577,7 @@ def plot_avg_spectrogram(tfr, times, freqs, event_band, spec_events=None,
 
             plot_events(tfr=tfr_trial, times=times, freqs=freqs,
                         event_band=event_band, spec_events=trial_events,
-                        timeseries=timeseries_trial, ax=axs[count_idx + 1],
+                        timeseries=timeseries_trial, ax=axs[plot_idx + 1],
                         vlim=vlim, ylim_ts=ylim_ts, label=f'epoch {trial_idx}')
 
     axs[-1].set_xlabel('time (s)')
