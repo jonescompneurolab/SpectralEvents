@@ -10,55 +10,59 @@ import scipy.ndimage.filters as filters
 import matplotlib.pyplot as plt
 
 
-def tfr(S, freqs, Fs, width=7.):
-    '''
-    Calculates the tfr (in spectral power) of a time-series waveform by 
-    convolving in the time-domain with a Morlet wavelet.                            
+def tfr(timeseries, freqs, samp_freq, width=7.):
+    '''Calculate the time-frequency response by convolving with Morlet wavelets
 
-    Input
+    Parameters
+    ----------
+    timeseries : array-like, shape ([n_epochs,] n_times)
+        The timeseries signal, one for each epoch of data.
+    freqs : array-like, shape (n_freqs,)
+        Frequency domain of the TFR (Hz).
+    samp_freq : float
+        Sampling frequency (Hz).
+    width : int
+        Number of cycles in each Morlet wavelet (>5 advisable).
+
+    Returns
+    -------
+    tfr : array, shape (n_epochs, n_freqs, n_times)
+        A collection of time-frequency responses (TFRs), one for each epoch.
+
+    Notes
     -----
-    S    : signals = Trials x Time
-    freqs    : frequencies over which to calculate TF energy        
-    Fs   : sampling frequency
-    width: number of cycles in wavelet (> 5 advisable)  
-
-    Output
-    ------
-    t    : time
-    f    : frequency
-    B    : phase-locking factor = frequency x time
-
     Adapted from Ole Jensen's traces2tfr in the 4Dtools toolbox.
-
-    See also SPECTRALEVENTS, SPECTRALEVENTS_FIND, SPECTRALEVENTS_VIS.
     '''
 
-    S = np.array(S)
-    n_epochs = S.shape[0]
-    n_samps = S.shape[1]
+    ts = np.atleast_2d(timeseries)
+    n_epochs = ts.shape[0]
+    n_samps = ts.shape[1]
     n_freqs = len(freqs)
-    # Validate freqs input
 
-    Fn = Fs / 2  # Nyquist frequency
-    dt = 1 / Fs  # Sampling time interval
+    # Validate freqs input
+    f_nyquist = samp_freq / 2  # Nyquist frequency
+    dt = 1 / samp_freq  # Sampling time interval
     min_freq = 1 / (n_samps * dt)  # Minimum resolvable frequency
 
     if freqs[0] < min_freq:
-        raise ValueError('Frequency vector includes values outside the resolvable/alias-free range.')
-    elif freqs[-1] > Fn:
-        raise ValueError('Frequency vector includes values outside the resolvable/alias-free range.')
+        raise ValueError('Frequency vector includes values outside the '
+                         'resolvable/alias-free range.')
+    elif freqs[-1] > f_nyquist:
+        raise ValueError('Frequency vector includes values outside the '
+                         'resolvable/alias-free range.')
     elif np.abs(freqs[1] - freqs[0]) < min_freq:
-        raise ValueError('Frequency vector includes values outside the resolvable/alias-free range.')
+        raise ValueError('Frequency vector includes values outside the '
+                         'resolvable/alias-free range.')
 
     tfr = np.zeros((n_epochs, n_freqs, n_samps))
 
     # Trial Loop
     for trial_idx in np.arange(n_epochs):
-        ts_detrended = signal.detrend(S[trial_idx, :])
+        ts_detrended = signal.detrend(ts[trial_idx, :])
         # Frequency loop
         for freq_idx in np.arange(n_freqs):
             tfr[trial_idx, freq_idx, :] = _energyvec(freqs[freq_idx],
-                                                     ts_detrended, Fs, width)
+                                                     ts_detrended, samp_freq, width)
 
     return tfr
 
@@ -81,7 +85,7 @@ def tfr_normalize(tfr):
     Returns
     -------
     tfr_norm : array
-        The normalized TFR calculated by dividing the power values in each                'Trial': trial_idx,
+        The normalized TFR calculated by dividing the power values in each
         frequency bin by the median power across all trials and time samples.
     '''
 
