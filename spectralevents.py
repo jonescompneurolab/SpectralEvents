@@ -438,7 +438,7 @@ def plot_events(tfr, times, freqs, event_band, spec_events=None,
     '''
 
     if tfr.shape != (len(freqs), len(times)):
-        raise ValueError(f'tfr must be an array of shape (n_freqs, n_times) '
+        raise ValueError(f'tfr must be an array of shape (n_freqs, n_times), '
                          f'got tfr: {tfr.shape}, freqs: ({len(freqs)},), '
                          f'times: ({len(times)},)')
 
