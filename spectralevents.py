@@ -155,7 +155,7 @@ def find_events(tfr, times, freqs, event_band, thresholds=None,
 
     # ensure tfr has 3 dimensions (epochs x freqs x time)
     if len(tfr.shape) < 3:
-        tfr = tfr[..., np.newaxis]
+        tfr = tfr[np.newaxis, ...]
     n_epochs = tfr.shape[0]
     n_freqs = tfr.shape[1]
     n_times = tfr.shape[2]
@@ -535,6 +535,10 @@ def plot_avg_spectrogram(tfr, times, freqs, event_band, spec_events=None,
     fig : Matplotlib.figure.Figure instance
         The Figure instance containing the average spectrogram.
     '''
+
+    if len(tfr.shape) != 3:
+        raise ValueError(f'tfr should be a 3D array of shape (n_epochs, '
+                         f'n_freqs, n_times), got {tfr.shape}.')
 
     if example_epochs is not None:
         trial_idx_set = set(range(tfr.shape[0]))
