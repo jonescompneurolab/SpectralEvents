@@ -153,7 +153,9 @@ def find_events(tfr, times, freqs, event_band, thresholds=None,
     suprathreshold activity in any given trial will render an event.
     '''
 
-    tfr = np.atleast_3d(tfr)
+    # ensure tfr has 3 dimensions (epochs x freqs x time)
+    if len(tfr.shape) < 3:
+        tfr = tfr[..., np.newaxis]
     n_epochs = tfr.shape[0]
     n_freqs = tfr.shape[1]
     n_times = tfr.shape[2]
