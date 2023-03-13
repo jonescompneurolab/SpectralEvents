@@ -1,7 +1,4 @@
-import pytest
-import numpy as np
-from scipy.io import loadmat
-
+# Authors: Ryan Thorpe <ryvthorpe@gmail.com>
 
 def test_event_comparison():
     pass

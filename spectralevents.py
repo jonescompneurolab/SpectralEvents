@@ -62,7 +62,8 @@ def tfr(timeseries, freqs, samp_freq, width=7.):
         # Frequency loop
         for freq_idx in np.arange(n_freqs):
             tfr[trial_idx, freq_idx, :] = _energyvec(freqs[freq_idx],
-                                                     ts_detrended, samp_freq, width)
+                                                     ts_detrended, samp_freq,
+                                                     width)
 
     return tfr
 
@@ -145,10 +146,10 @@ def find_events(tfr, times, freqs, event_band, thresholds=None,
     Notes
     -----
     This version only supports find-method #1 at the moment. As outlined in
-    Shin et al. eLife (2017), it isolates spectral events by first retrieving 
+    Shin et al. eLife (2017), it isolates spectral events by first retrieving
     all local maxima in un-normalized TFR using imregionalmax, then selecting
     suprathreshold peaks within the frequency band of interest. This method
-    allows for multiple, overlapping events to occur in a given suprathreshold 
+    allows for multiple, overlapping events to occur in a given suprathreshold
     region and does not guarantee that the presence of within-band,
     suprathreshold activity in any given trial will render an event.
     '''
@@ -208,10 +209,9 @@ def _energyvec(f, s, Fs, width=7.):
 
 def _morlet(f, t, width):
     '''
-    Morlet's wavelet for frequency f and time t. 
-    The wavelet will be normalized so the total energy is 1.
-    width defines the ``width'' of the wavelet. 
-    A value >= 5 is suggested.
+    Morlet's wavelet for frequency f and time t. The wavelet will be normalized
+    so the total energy is 1. width defines the ``width'' of the wavelet. A
+    value >= 5 is suggested.
 
     Ref: Tallon-Baudry et al., J. Neurosci. 15, 722-734 (1997)
     '''
@@ -226,33 +226,40 @@ def _morlet(f, t, width):
 
 def _fwhm_lower_upper_bound1(vec, peakInd, peakValue):
     '''
-    Function to find the lower and upper indices within which the vector is less than the FWHM
-      with some rather complicated boundary rules (Shin, eLife, 2017)
+    Function to find the lower and upper indices within which the vector is
+    less than the FWHM with some rather complicated boundary rules
+    (Shin, eLife, 2017).
     '''
 
     halfMax = peakValue/2
 
-    # Extract data before the peak only (data should be rising at the end of the new array)
+    # Extract data before the peak only (data should be rising at the end of
+    # the new array)
     vec1 = vec[0:peakInd]
     # Find indices less than half the max
     vec1_underThreshold = np.where(vec1 < halfMax)[0]
     if len(vec1_underThreshold) == 0:
-        # There are no indices less than half the max, so we have to estimate the lower edge
+        # There are no indices less than half the max, so we have to estimate
+        # the lower edge
         estimateLowerEdge = True
     else:
-        # There are indices less than half the max, take the last one under halfMax as the lower edge
+        # There are indices less than half the max, take the last one under
+        # halfMax as the lower edge
         estimateLowerEdge = False
         lowerEdgeIndex = vec1_underThreshold[-1]
 
-    # Extract data following the peak only (data should be falling at the start of the new array)
+    # Extract data following the peak only (data should be falling at the start
+    # of the new array)
     vec2 = vec[peakInd:]
     # Find indices less than half the max
     vec2_underThreshold = np.where(vec2 < halfMax)[0]
     if len(vec2_underThreshold) == 0:
-        # There are no indices less than half the max, so we have to estimate the upper edge
+        # There are no indices less than half the max, so we have to estimate
+        # the upper edge
         estimateUpperEdge = True
     else:
-        # There are indices less than half the max, take the first one under halfMax as the upper edge
+        # There are indices less than half the max, take the first one under
+        # halfMax as the upper edge
         estimateUpperEdge = False
         upperEdgeIndex = vec2_underThreshold[0] + len(vec1)
 
@@ -370,11 +377,6 @@ def _find_localmax_method_1(tfr, freqs, times, event_band,
             FWHMTime = FWHM / Fs
 
             # Put peak characteristics to a dictionary
-            #        hit/miss,         maxima frequency,
-            #        lowerbound frequency,     upperbound frequency,
-            #        frequency span,         maxima timing,     event onset timing,
-            #        event offset timing,     event duration, maxima power,
-            #        maxima/median power
             peakParameters = {
                 'Peak Frequency': freqs[thisPeakF],
                 'Lower Frequency Bound': lowerEdgeFreq,
@@ -449,7 +451,8 @@ def plot_events(tfr, times, freqs, event_band, spec_events=None,
     freqs = np.array(freqs)
 
     # frequencies within the band of interest
-    # band_mask = np.logical_and(freqs >= event_band[0], freqs <= event_band[1])
+    # band_mask = np.logical_and(freqs >= event_band[0],
+    #                            freqs <= event_band[1])
 
     if ax is None:
         fig, ax = plt.subplots(1, 1)
