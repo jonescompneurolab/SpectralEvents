@@ -1,6 +1,7 @@
-# SpectralEvents Toolbox
-
+[![tests](https://github.com/jonescompneurolab/SpectralEvents/actions/workflows/tests.yml/badge.svg?branch=master)](https://github.com/jonescompneurolab/SpectralEvents/actions/?query=branch:master+event:push)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jonescompneurolab/SpectralEvents/HEAD?labpath=tutorial.ipynb)
+
+# SpectralEvents Toolbox
 
 This toolbox is composed of a series of functions that find and analyze transient spectral activity (spectral events) in a time-series dataset, allowing for spectral event feature comparison between trial outcomes/conditions. Spectral events are defined as local maxima above a power threshold of a specified band in the non-averaged time-frequency responses (TFR).
 
