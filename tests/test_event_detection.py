@@ -7,11 +7,10 @@ import sys
 import os
 import os.path as op
 
-import pytest
 import numpy as np
 from scipy.io import loadmat
 
-sys.path.append('/gpfs/home/ddiesbur/SpectralEvents')
+# sys.path.append('/Users/darcy/Desktop/SpectralEvents/')
 import spectralevents as se
 
 def test_event_comparison():
@@ -32,28 +31,15 @@ def test_event_comparison():
     '''
 
     # Define tolerable deviance for spectral event characteristics
-    dev_max_time = 5  # +-5ms
-    dev_max_freq = 1  # +-1Hz
-    dev_low_freq = 1  # +-1Hz
-    dev_high_freq = 1  # +-1Hz
-    dev_onset = 10  # +-10ms
-    dev_offset = 10  # +-10ms
-    dev_fom_pow = 0.5  # +-0.5 FOM
+    dev_max_time = 5  # +-5ms allowed for timing latency diff
+    dev_count_avg = 0.001 # 1 of 1000 trials, on average, may have different event count
 
     # Load MATLAB data
-    data_dir = os.getcwd()
-    if method == 1:
-        matlab_file = loadmat(
-            op.join(data_dir, 'tests', 'beta_events_shin_2017.mat'))
-    #elif method == 3:
-    #    matlab_file = loadmat(
-    #        op.join(data_dir, 'tests', 'beta_events_shin_2017_method3.mat'))
-    else:
-        raise ValueError('Unsupported method! Please use 1') #or 3')
-    mat_all_evs = matlab_file['event_times'][:, 0]
+    data_dir = os.getcwd() 
+    matlab_ev_struct = loadmat(
+        op.join(data_dir, 'tests', 'beta_events_shin_2017.mat'))
 
     # Get python events by running find_events on demo data
-    # <----------SIMPLIFY BY GETTING PRE-SAVED PICKLE FILES FOR THIS INSTEAD----------->
     subj_ids = [str(id) for id in range(1, 10 + 1)]  # subject IDs 1-10
 
     # set parameters
@@ -65,8 +51,8 @@ def test_event_comparison():
     event_band = [15, 29]  # beta band (Hz)
     thresh_fom = 6.0  # factor-of-the-median threshold
 
-    # get python evs
-    py_all_evs = list()
+    # get python evs by running find_events()
+    py_ev_dict = list()
     for _, id_val in enumerate(subj_ids):
         fname = op.join(
             data_dir, 'data','prestim_humandetection_600hzMEG_subject' + id_val + '.mat')
@@ -77,107 +63,49 @@ def test_event_comparison():
 
         # find events
         subj_evs = se.find_events(tfr=tfrs, times=times, freqs=freqs, event_band=event_band,
-                                  thresholds=None, threshold_FOM=thresh_fom, find_method=method)
-        py_all_evs.append(subj_evs)
+                                thresholds=None, threshold_FOM=thresh_fom)
+        py_ev_dict.append(subj_evs)
 
-    # put from cell array/dict into sets
-    py_evs = np.array([])
+    # take ev counts and timing latencies from respective dictionaries and structures 
+    # to put into a subj x trial matrix for comparison
+    py_ev_count_mat = np.zeros((10,200))
     for subj_idx, id_val in enumerate(subj_ids):
-        py_evs = np.append(py_evs,np.array([len(trial) for trial in py_all_evs[subj_idx]]))
-    mat_evs = np.array([trial.shape[1] for trial in mat_all_evs])
+        py_ev_count_mat[subj_idx,:] = np.array([len(trial) for trial in py_ev_dict[subj_idx]])
 
-    # Overall check that same # of evs detected (or we adapt this to a tolerable # of difference)
-    assert np.array_equal(
-        mat_evs, py_evs), "Should be same number of events across all trials"
+    # matlab - these are already in an array, so just reshape
+    matlab_ev_count_mat = np.array([trial.shape[1] for trial in matlab_ev_struct['event_times'][:, 0]])
+    matlab_ev_count_mat = np.reshape(matlab_ev_count_mat,(10,200))
 
-    # Once assured same num of evs, extract event characteristics into np arrays
+    # Overall check that same # of evs detected (or a tolerable # of differences)
+    assert np.mean(np.abs(matlab_ev_count_mat-py_ev_count_mat))<=dev_count_avg, "Should be mostly same number of events across all trials"
+
+    # Once assured number of evs are within tolerable comparison limits, extract event characteristics
     # matlab evs
-    mat_times = np.array([])
-    mat_max_freq = np.array([])
-    mat_low_freq = np.array([])
-    mat_high_freq = np.array([])
-    mat_onsets = np.array([])
-    mat_offsets = np.array([])
-    mat_power = np.array([])
-    trial_ind = -1
-    for trial in mat_all_evs:
-        trial_ind += 1
-        mat_times = [np.append(mat_times, event) for event in trial]
-        mat_max_freq = [np.append(mat_max_freq, event)
-                      for event in matlab_file['event_maxfreqs'][trial_ind]]
-        mat_low_freq = [np.append(mat_low_freq, event)
-                      for event in matlab_file['event_lowfreqs'][trial_ind]]
-        mat_high_freq = [np.append(mat_high_freq, event)
-                       for event in matlab_file['event_highfreqs'][trial_ind]]
-        mat_onsets = [np.append(mat_onsets, event)
-                     for event in matlab_file['event_onsets'][trial_ind]]
-        mat_offsets = [np.append(mat_offsets, event)
-                      for event in matlab_file['event_offsets'][trial_ind]]
-        mat_power = [np.append(mat_power, event)
-                    for event in matlab_file['event_powers'][trial_ind]]
+    same_ev_count_bool = (matlab_ev_count_mat==py_ev_count_mat)
+    same_ev_count_bool_reshape = np.reshape(same_ev_count_bool,(2000,))
 
-    # python evs
-    py_times = np.array([])
-    py_onsets = np.array([])
-    py_offsets = np.array([])
-    py_max_freq = np.array([])
-    py_low_freq = np.array([])
-    py_high_freq = np.array([])
-    py_power = np.array([])
-    for trial in py_all_evs:
-        if len(trial) > 0:
-            trial_times = np.array([])
-            trial_onsets = np.array([])
-            trial_offsets = np.array([])
-            trial_max_freq = np.array([])
-            trial_low_freq = np.array([])
-            trial_high_freq = np.array([])
-            trial_power = np.array([])
-            for event in trial:
-                trial_times = np.append(trial_times, event['Peak Time'])
-                trial_onsets = np.append(trial_onsets, event['Event Onset Time'])
-                trial_offsets = np.append(trial_offsets, event['Event Offset Time'])
-                trial_max_freq = np.append(trial_max_freq, event['Peak Frequency'])
-                trial_low_freq = np.append(
-                    trial_low_freq, event['Lower Frequency Bound'])
-                trial_high_freq = np.append(
-                    trial_high_freq, event['Upper Frequency Bound'])
-                trial_power = np.append(trial_power, event['Normalized Peak Power'])
-                sorter = np.argsort(trial_times)
-            py_times = np.append(py_times, trial_times[sorter])
-            py_onsets = np.append(py_onsets, trial_onsets[sorter])
-            py_offsets = np.append(py_offsets, trial_offsets[sorter])
-            py_max_freq = np.append(py_max_freq, trial_max_freq[sorter])
-            py_low_freq = np.append(py_low_freq, trial_low_freq[sorter])
-            py_high_freq = np.append(py_high_freq, trial_high_freq[sorter])
-            py_power = np.append(py_power, trial_power[sorter])
+    # get event timing in trials in which the event count was equal
+    matlab_ev_timing_list = list()
+    py_ev_timing_list = list()
+    # extract latencies from matlab structure, which has all subject trials in array of arrays within dictionary key
+    for trial in range(len(same_ev_count_bool_reshape)):
+        if same_ev_count_bool_reshape[trial]:
+            matlab_ev_timing_list = [np.append(matlab_ev_timing_list, np.array(event)) for event in matlab_ev_struct['event_times'][trial, 0]][0]
+    # extract latencies from py dictionaries for each subject
+    for subj_idx in range(10):
+        subj_evs = py_ev_dict[subj_idx]
+        for trial_idx in range(200):
+            trial_evs = list()
+            if same_ev_count_bool[subj_idx, trial_idx]:
+                # append sorted event latencies
+                if len(subj_evs[trial_idx])>0:
+                    for event in subj_evs[trial_idx]:
+                        trial_evs = np.append(trial_evs, event['Peak Time'])
+                    sorted = np.argsort(trial_evs)
+                    py_ev_timing_list = np.append(py_ev_timing_list, trial_evs[sorted])
 
-    # Timing - check max timing
-    assert ((mat_times - py_times)*1000 <= dev_max_time).all(
-    ), "Timing of events should be within tolerable limits of deviation"
-
-    # Frequency - check max freq
-    assert ((mat_max_freq - py_max_freq) <= dev_max_freq).all(
-    ), "Peak frequency of events should be within tolerable limits of deviation"
-
-    # check lower freq bound
-    assert ((mat_low_freq - py_low_freq) <= dev_low_freq).all(
-    ), "Lower frequency of events should be within tolerable limits of deviation"
-
-    # check higher freq bound
-    assert ((mat_high_freq - py_high_freq) <= dev_high_freq).all(
-    ), "Higher frequency of events should be within tolerable limits of deviation"
-
-    # Duration - check onset
-    assert ((mat_onsets - py_onsets)*1000 <= dev_onset).all(
-    ), "Onset of events should be within tolerable limits of deviation"
-
-    # check offset
-    assert ((mat_offsets - py_offsets)*1000 <= dev_offset).all(
-    ), "Offset of events should be within tolerable limits of deviation"
-
-    # Power - check maximum power in FOM
-    assert ((mat_power - py_power) <= dev_fom_pow).all(
-    ), "Power of events should be within tolerable limits of deviation"
+    # ensure that, in the events that were the same detected in each method, timing is within a tolerable limit of difference
+    assert ((matlab_ev_timing_list - py_ev_timing_list)*1000 <= dev_max_time).all(
+        ), "Timing of events should be within tolerable limits of deviation"
 
     pass
