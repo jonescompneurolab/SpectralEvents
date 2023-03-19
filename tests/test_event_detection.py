@@ -3,14 +3,12 @@
 # Authors: Ryan Thorpe <ryvthorpe@gmail.com>
 # Authors: Darcy Diesburg <darcy.diesburg@gmail.com>
 
-import os
 import os.path as op
 
 import numpy as np
 from scipy.io import loadmat
 
-# sys.path.append('/Users/darcy/Desktop/SpectralEvents/')
-import spectralevents as se
+import SpectralEvents.spectralevents as se
 
 
 def test_event_comparison():
@@ -35,9 +33,9 @@ def test_event_comparison():
     dev_count_avg = 0.001  # 1/1000 trials, on average
 
     # Load MATLAB data
-    data_dir = os.getcwd()
-    matlab_ev_struct = loadmat(
-        op.join(data_dir, 'tests', 'beta_events_shin_2017.mat'))
+    root_dir = op.dirname(se.__file__)
+    matlab_ev_struct = loadmat(op.join(root_dir, 'tests',
+                                       'beta_events_shin_2017.mat'))
 
     # Get python events by running find_events on demo data
     subj_ids = [str(id) for id in range(1, 10 + 1)]  # subject IDs 1-10
@@ -55,7 +53,7 @@ def test_event_comparison():
     py_ev_dict = list()
     for _, id_val in enumerate(subj_ids):
         fname = op.join(
-            data_dir, 'data', 'prestim_humandetection_600hzMEG_subject' +
+            root_dir, 'data', 'prestim_humandetection_600hzMEG_subject' +
             id_val + '.mat')
         raw_data = loadmat(fname)
         data = raw_data['prestim_raw_yes_no']
