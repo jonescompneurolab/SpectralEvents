@@ -67,12 +67,13 @@ dt = 1/Fs;
 sf = f/width;
 st = 1/(2*pi*sf);
 
-t=-3.5*st:dt:3.5*st;
+t=0:dt:3.5*st;
+t=[-t(end:-1:2),t];
 m = morlet(f,t,width);
 
 y = conv(s,m);
 y = 2*(dt*abs(y)).^2;
-y = y(ceil(length(m)/2):length(y)-floor(length(m)/2));
+y = y(floor(length(m)/2) + 1:length(y)-floor(length(m)/2));
 end
 
 function y = morlet(f,t,width)
