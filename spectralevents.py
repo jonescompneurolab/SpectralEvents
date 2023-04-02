@@ -198,15 +198,14 @@ def _energyvec(f, s, Fs, width=7.):
     t_single_side = np.arange(0., 3.5 * st, dt)
     # mirror about 0; always an odd # of elements
     times = np.r_[-t_single_side[-1:0:-1], t_single_side]
-    m = _morlet(f, times, width)
+    wavelet = _morlet(f, times, width)
 
-    y = np.convolve(s, m)
-    y = 2 * (dt * np.abs(y)) ** 2
-    lowerLimit = int(len(m) // 2)
-    upperLimit = int(len(y) - (len(m) // 2))
-    y = y[lowerLimit:upperLimit]
+    fourier_coeffs = np.convolve(s, wavelet)
+    spec_energy = 2 * (dt * np.abs(fourier_coeffs)) ** 2
+    lower_idx = int(len(wavelet) // 2)
+    upper_idx = int(len(spec_energy) - (len(wavelet) // 2))
 
-    return y
+    return spec_energy[lower_idx:upper_idx]
 
 
 def _morlet(f, t, width):
