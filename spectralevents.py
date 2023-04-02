@@ -195,9 +195,10 @@ def _energyvec(f, s, Fs, width=7.):
     sf = f / width
     st = 1 / (2 * np.pi * sf)
 
-    t = np.arange(0., 3.5 * st, dt)
-    t = np.r_[-t[-1:0:-1], t]  # mirror about 0; always an odd # of elements
-    m = _morlet(f, t, width)
+    t_single_side = np.arange(0., 3.5 * st, dt)
+    # mirror about 0; always an odd # of elements
+    times = np.r_[-t_single_side[-1:0:-1], t_single_side]
+    m = _morlet(f, times, width)
 
     y = np.convolve(s, m)
     y = 2 * (dt * np.abs(y)) ** 2
