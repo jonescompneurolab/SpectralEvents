@@ -195,13 +195,14 @@ def _energyvec(f, s, Fs, width=7.):
     sf = f / width
     st = 1 / (2 * np.pi * sf)
 
-    t = np.arange(-3.5 * st, 3.5 * st, dt)
+    t = np.arange(0., 3.5 * st, dt)
+    t = np.r_[-t[-1:0:-1], t]  # mirror about 0; always an odd # of elements
     m = _morlet(f, t, width)
 
     y = np.convolve(s, m)
     y = 2 * (dt * np.abs(y)) ** 2
-    lowerLimit = int(np.ceil(len(m) / 2))
-    upperLimit = int(len(y) - np.floor(len(m) / 2) + 1)
+    lowerLimit = int(len(m) // 2)
+    upperLimit = int(len(y) - (len(m) // 2))
     y = y[lowerLimit:upperLimit]
 
     return y
