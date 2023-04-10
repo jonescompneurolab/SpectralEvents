@@ -67,7 +67,7 @@ def test_event_comparison():
     # matlab - these are already in an array, so just reshape
     matlab_ev_count_mat = [
         trial.shape[1] for trial in matlab_ev_struct['event_times'][:, 0]]
-    matlab_ev_count_mat = np.reshape(np.array(matlab_ev_count_mat), (10, 200))
+    matlab_ev_count_mat = np.reshape(matlab_ev_count_mat, (10, 200))
 
     # Overall check that same # of evs detected
     # (or a tolerable # of differences)
@@ -85,17 +85,29 @@ def test_event_comparison():
     py_ev_timing_list = list()
     # extract latencies from matlab structure, which has all subject trials
     # in array of arrays within dictionary key
-    matlab_ev_timing_list = np.concatenate([
+    # first, extract the events
+    trial_indices = np.where(same_ev_count_bool_reshape)[0]
+    event_times = [
         matlab_ev_struct['event_times'][trial, 0].flatten()
-        for trial in np.where(same_ev_count_bool_reshape)[0]
-    ])
+        for trial in trial_indices
+    ]
+
+    # then, concatenate the event times into a single list
+    matlab_ev_timing_list = np.concatenate(event_times)
 
     # extract latencies from py dictionaries for each subject
-    py_ev_timing_list = np.concatenate([
-        np.sort([event['Peak Time'] for event in subj_evs[trial_idx]])
-        for subj_idx, subj_evs in enumerate(py_ev_dict)
-        for trial_idx in range(200) if same_ev_count_bool[subj_idx, trial_idx]
-    ])
+    # First, create a list of sorted event times for each trial
+    trial_event_times = []
+    for subj_idx, subj_evs in enumerate(py_ev_dict):
+        for trial_idx in range(200):
+            if same_ev_count_bool[subj_idx, trial_idx]:
+                event_times = [event['Peak Time']
+                               for event in subj_evs[trial_idx]]
+                sorted_event_times = np.sort(event_times)
+                trial_event_times.append(sorted_event_times)
+
+    # Then, concatenate the lists into a single array
+    py_ev_timing_list = np.concatenate(trial_event_times)
 
     # ensure that, in the events that were the same detected in each method,
     # timing is within a tolerable limit of difference
