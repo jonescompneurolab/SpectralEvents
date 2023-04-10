@@ -19,6 +19,10 @@ def test_event_comparison():
     is required, and tolerable margins of deviation for the other parameters.
     '''
 
+    # number of subjects, trials in demo data
+    n_subjs = 10
+    n_trials = 200
+
     # Define tolerable deviance for spectral event characteristics
     dev_event_time = 2.0  # +-2ms allowed for timing latency diff
     dev_count_avg = 0.0  # 0/1000 trials, on average
@@ -29,7 +33,7 @@ def test_event_comparison():
                                        'beta_events_shin_2017.mat'))
 
     # Get python events by running find_events on demo data
-    subj_ids = [str(id) for id in range(1, 10 + 1)]  # subject IDs 1-10
+    subj_ids = [str(id) for id in range(1, n_subjs + 1)]  # subject IDs 1-10
 
     # set parameters
     samp_freq = 600
@@ -59,7 +63,7 @@ def test_event_comparison():
 
     # take ev counts and timing latencies from respective dictionaries
     # and structures to put into a subj x trial matrix for comparison
-    py_ev_count_mat = np.zeros((10, 200))
+    py_ev_count_mat = np.zeros((n_subjs, n_trials))
     for subj_idx, id_val in enumerate(subj_ids):
         py_ev_count_mat[subj_idx, :] = [
             len(trial) for trial in py_ev_dict[subj_idx]]
@@ -67,7 +71,7 @@ def test_event_comparison():
     # matlab - these are already in an array, so just reshape
     matlab_ev_count_mat = [
         trial.shape[1] for trial in matlab_ev_struct['event_times'][:, 0]]
-    matlab_ev_count_mat = np.reshape(matlab_ev_count_mat, (10, 200))
+    matlab_ev_count_mat = np.reshape(matlab_ev_count_mat, (n_subjs, n_trials))
 
     # Overall check that same # of evs detected
     # (or a tolerable # of differences)
@@ -78,7 +82,8 @@ def test_event_comparison():
     # Once assured number of evs are within tolerable limits, extract evs
     # matlab evs
     same_ev_count_bool = (matlab_ev_count_mat == py_ev_count_mat)
-    same_ev_count_bool_reshape = np.reshape(same_ev_count_bool, (2000,))
+    same_ev_count_bool_reshape = np.reshape(
+        same_ev_count_bool, (n_subjs*n_trials,))
 
     # get event timing in trials in which the event count was equal
     matlab_ev_timing_list = list()
