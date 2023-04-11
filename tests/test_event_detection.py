@@ -104,7 +104,7 @@ def test_event_comparison():
     # First, create a list of sorted event times for each trial
     trial_event_times = []
     for subj_idx, subj_evs in enumerate(py_ev_dict):
-        for trial_idx in range(200):
+        for trial_idx in range(n_trials):
             if same_ev_count_bool[subj_idx, trial_idx]:
                 event_times = [event['Peak Time']
                                for event in subj_evs[trial_idx]]
