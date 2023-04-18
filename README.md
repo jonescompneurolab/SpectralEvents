@@ -146,3 +146,4 @@ Inputs:
 * Hyeyoung Shin, Department of Neuroscience, Brown University, shinehyeyoung@gmail.com
 * Ryan Thorpe, Department of Neuroscience, Brown University, ryvthorpe@gmail.com
 * Tim Bardouille, Department of Physics and Atmospheric Science, Dalhousie University, tim.bardouille@dal.ca
+* Darcy Diesburg, Department of Neuroscience, Brown University, darcy.diesburg@gmail.com
