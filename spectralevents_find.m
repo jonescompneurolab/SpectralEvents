@@ -65,26 +65,6 @@ function specEv_struct = spectralevents_find(findMethod, eventBand, thrFOM, tVec
 %
 % See also SPECTRALEVENTS, SPECTRALEVENTS_FIND, SPECTRALEVENTS_TS2TFR, SPECTRALEVENTS_VIS.
 
-%   -----------------------------------------------------------------------
-%   SpectralEvents::spectralevents_find
-%   Copyright (C) 2018  Ryan Thorpe
-%
-%   This file is part of the SpectralEvents toolbox.
-% 
-%   SpectralEvents is free software: you can redistribute it and/or modify
-%   it under the terms of the GNU General Public License as published by
-%   the Free Software Foundation, either version 3 of the License, or
-%   (at your option) any later version.
-% 
-%   SpectralEvents is distributed in the hope that it will be useful,
-%   but WITHOUT ANY WARRANTY; without even the implied warranty of
-%   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%   GNU General Public License for more details.
-% 
-%   You should have received a copy of the GNU General Public License
-%   along with this program.  If not, see <https://www.gnu.org/licenses/>.
-%   -----------------------------------------------------------------------
-
 % Initialize general data parameters
 eventBand_inds = fVec>=eventBand(1) & fVec<=eventBand(2); %Logical vector representing indices of freq vector within eventBand
 if size(eventBand_inds,1)~=length(eventBand_inds)
