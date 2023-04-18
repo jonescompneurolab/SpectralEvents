@@ -54,26 +54,6 @@ function [specEv_struct, TFRs, X] = spectralevents(eventBand, fVec, Fs, findMeth
 %
 % See also SPECTRALEVENTS_FIND, SPECTRALEVENTS_TS2TFR, SPECTRALEVENTS_VIS.
 
-%   -----------------------------------------------------------------------
-%   SpectralEvents::spectralevents
-%   Copyright (C) 2018  Ryan Thorpe
-%
-%   This file is part of the SpectralEvents toolbox.
-% 
-%   SpectralEvents is free software: you can redistribute it and/or modify
-%   it under the terms of the GNU General Public License as published by
-%   the Free Software Foundation, either version 3 of the License, or
-%   (at your option) any later version.
-% 
-%   SpectralEvents is distributed in the hope that it will be useful,
-%   but WITHOUT ANY WARRANTY; without even the implied warranty of
-%   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%   GNU General Public License for more details.
-% 
-%   You should have received a copy of the GNU General Public License
-%   along with this program.  If not, see <https://www.gnu.org/licenses/>.
-%   -----------------------------------------------------------------------
-
 % Validate number of time-series (X{1}, X{2},...) and trial class label (classLabels{1}, classLabels{2},...) inputs
 if nargin-5>=2
     X = varargin((1:2:numel(varargin))); %Cell array containing time-series trials by subject/session
