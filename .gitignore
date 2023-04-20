@@ -3,6 +3,18 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Distribution / packaging
+.Python
+dist/
+*.egg*
+build
+coverage
+*.xml
+.venv
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
